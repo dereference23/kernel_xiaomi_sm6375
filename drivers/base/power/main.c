@@ -31,7 +31,6 @@
 #include <linux/suspend.h>
 #include <trace/events/power.h>
 #include <linux/cpufreq.h>
-#include <linux/cpuidle.h>
 #include <linux/devfreq.h>
 #include <linux/timer.h>
 
@@ -802,8 +801,6 @@ void dpm_resume_noirq(pm_message_t state)
 
 	resume_device_irqs();
 	device_wakeup_disarm_wake_irqs();
-
-	cpuidle_resume();
 }
 
 static pm_callback_t dpm_subsys_resume_early_cb(struct device *dev,
@@ -1442,8 +1439,6 @@ static int dpm_noirq_suspend_devices(pm_message_t state)
 int dpm_suspend_noirq(pm_message_t state)
 {
 	int ret;
-
-	cpuidle_pause();
 
 	device_wakeup_arm_wake_irqs();
 	suspend_device_irqs();
