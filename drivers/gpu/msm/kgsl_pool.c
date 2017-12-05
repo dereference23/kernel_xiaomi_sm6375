@@ -540,8 +540,13 @@ static unsigned long
 kgsl_pool_shrink_scan_objects(struct shrinker *shrinker,
 					struct shrink_control *sc)
 {
+	unsigned long ret;
+
 	/* sc->nr_to_scan represents number of pages to be removed*/
-	return kgsl_pool_reduce(sc->nr_to_scan, false);
+	ret = kgsl_pool_reduce(sc->nr_to_scan, false);
+
+	/* If we are unable to shrink more, stop trying */
+	return (ret == 0) ? SHRINK_STOP : ret;
 }
 
 static unsigned long
