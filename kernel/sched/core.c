@@ -2865,9 +2865,7 @@ out:
 	if (success && sched_predl) {
 		raw_spin_lock_irqsave(&cpu_rq(cpu)->lock, flags);
 		if (do_pl_notif(cpu_rq(cpu)))
-			cpufreq_update_util(cpu_rq(cpu),
-						SCHED_CPUFREQ_WALT |
-						SCHED_CPUFREQ_PL);
+			cpufreq_update_util(cpu_rq(cpu), SCHED_CPUFREQ_PL);
 		raw_spin_unlock_irqrestore(&cpu_rq(cpu)->lock, flags);
 	}
 #endif
@@ -3851,7 +3849,6 @@ void scheduler_tick(void)
 	bool early_notif;
 	u32 old_load;
 	struct walt_related_thread_group *grp;
-	unsigned int flag = 0;
 
 	sched_clock_tick();
 
@@ -3868,9 +3865,8 @@ void scheduler_tick(void)
 
 	early_notif = early_detection_notify(rq, wallclock);
 	if (early_notif)
-		flag = SCHED_CPUFREQ_WALT | SCHED_CPUFREQ_EARLY_DET;
+		cpufreq_update_util(rq, SCHED_CPUFREQ_EARLY_DET);
 
-	cpufreq_update_util(rq, flag);
 	rq_unlock(rq, &rf);
 
 	perf_event_task_tick();
