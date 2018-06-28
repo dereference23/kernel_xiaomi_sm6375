@@ -1182,6 +1182,9 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 	u8 irq_flag = 0;
 	int r;
 
+	/* prevent CPU from entering deep sleep */
+	pm_qos_update_request(&core_data->pm_qos_req, 100);
+
 	core_data->irq_trig_cnt++;
 	/* inform external module */
 	mutex_lock(&goodix_modules.mutex);
@@ -1192,6 +1195,8 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 		r = ext_module->funcs->irq_event(core_data, ext_module);
 		if (r == EVT_CANCEL_IRQEVT) {
 			mutex_unlock(&goodix_modules.mutex);
+			pm_qos_update_request(&core_data->pm_qos_req,
+					      PM_QOS_DEFAULT_VALUE);
 			return IRQ_HANDLED;
 		}
 	}
@@ -1215,6 +1220,8 @@ static irqreturn_t goodix_ts_threadirq_func(int irq, void *data)
 	/* clean irq flag */
 	irq_flag = 0;
 	ts_dev->hw_ops->write_trans(ts_dev, ts_dev->reg.coor, &irq_flag, 1);
+
+	pm_qos_update_request(&core_data->pm_qos_req, PM_QOS_DEFAULT_VALUE);
 
 	return IRQ_HANDLED;
 }
@@ -2200,6 +2207,8 @@ int goodix_ts_stage2_init(struct goodix_ts_core *core_data)
 			goto err_finger;
 		}
 	}
+	pm_qos_add_request(&core_data->pm_qos_req, PM_QOS_CPU_DMA_LATENCY,
+			   PM_QOS_DEFAULT_VALUE);
 	/* request irq line */
 	r = goodix_ts_irq_setup(core_data);
 	if (r < 0) {
@@ -2240,6 +2249,7 @@ int goodix_ts_stage2_init(struct goodix_ts_core *core_data)
 
 	return 0;
 exit:
+	pm_qos_remove_request(&core_data->pm_qos_req);
 	goodix_ts_pen_dev_remove(core_data);
 err_finger:
 	goodix_ts_input_dev_remove(core_data);
@@ -2463,6 +2473,7 @@ static int goodix_ts_remove(struct platform_device *pdev)
 	goodix_ts_input_dev_remove(core_data);
 	goodix_ts_pen_dev_remove(core_data);
 	goodix_ts_irq_enable(core_data, false);
+	pm_qos_remove_request(&core_data->pm_qos_req);
 
 	goodix_ts_power_off(core_data);
 	goodix_ts_sysfs_exit(core_data);
