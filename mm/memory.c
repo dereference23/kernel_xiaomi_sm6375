@@ -566,8 +566,7 @@ static void print_bad_pte(struct vm_area_struct *vma, unsigned long addr,
 }
 
 /*
- * __vm_normal_page -- This function gets the "struct page" associated with
- * a pte.
+ * vm_normal_page -- This function gets the "struct page" associated with a pte.
  *
  * "Special" mappings do not wish to be associated with a "struct page" (either
  * it doesn't exist, or it exists but they don't want to touch it). In this
@@ -608,8 +607,8 @@ static void print_bad_pte(struct vm_area_struct *vma, unsigned long addr,
  * PFNMAP mappings in order to support COWable mappings.
  *
  */
-struct page *_vm_normal_page(struct vm_area_struct *vma, unsigned long addr,
-			      pte_t pte, unsigned long vma_flags)
+struct page *vm_normal_page(struct vm_area_struct *vma, unsigned long addr,
+			    pte_t pte)
 {
 	unsigned long pfn = pte_pfn(pte);
 
@@ -618,7 +617,7 @@ struct page *_vm_normal_page(struct vm_area_struct *vma, unsigned long addr,
 			goto check_pfn;
 		if (vma->vm_ops && vma->vm_ops->find_special_page)
 			return vma->vm_ops->find_special_page(vma, addr);
-		if (vma_flags & (VM_PFNMAP | VM_MIXEDMAP))
+		if (vma->vm_flags & (VM_PFNMAP | VM_MIXEDMAP))
 			return NULL;
 		if (is_zero_pfn(pfn))
 			return NULL;
@@ -630,13 +629,9 @@ struct page *_vm_normal_page(struct vm_area_struct *vma, unsigned long addr,
 	}
 
 	/* !CONFIG_ARCH_HAS_PTE_SPECIAL case follows: */
-	/*
-	 * This part should never get called when CONFIG_SPECULATIVE_PAGE_FAULT
-	 * is set. This is mainly because we can't rely on vm_start.
-	 */
 
-	if (unlikely(vma_flags & (VM_PFNMAP|VM_MIXEDMAP))) {
-		if (vma_flags & VM_MIXEDMAP) {
+	if (unlikely(vma->vm_flags & (VM_PFNMAP|VM_MIXEDMAP))) {
+		if (vma->vm_flags & VM_MIXEDMAP) {
 			if (!pfn_valid(pfn))
 				return NULL;
 			goto out;
@@ -645,7 +640,7 @@ struct page *_vm_normal_page(struct vm_area_struct *vma, unsigned long addr,
 			off = (addr - vma->vm_start) >> PAGE_SHIFT;
 			if (pfn == vma->vm_pgoff + off)
 				return NULL;
-			if (!is_cow_mapping(vma_flags))
+			if (!is_cow_mapping(vma->vm_flags))
 				return NULL;
 		}
 	}
@@ -2781,8 +2776,7 @@ static vm_fault_t do_wp_page(struct vm_fault *vmf)
 		     mm_tlb_flush_pending(vmf->vma->vm_mm)))
 		flush_tlb_page(vmf->vma, vmf->address);
 
-	vmf->page = _vm_normal_page(vma, vmf->address, vmf->orig_pte,
-					vmf->vma_flags);
+	vmf->page = vm_normal_page(vma, vmf->address, vmf->orig_pte);
 	if (!vmf->page) {
 		/*
 		 * VM_MIXEDMAP !pfn_valid() case, or VM_SOFTDIRTY clear on a
@@ -3966,7 +3960,7 @@ static vm_fault_t do_numa_page(struct vm_fault *vmf)
 	ptep_modify_prot_commit(vma, vmf->address, vmf->pte, old_pte, pte);
 	update_mmu_cache(vma, vmf->address, vmf->pte);
 
-	page = _vm_normal_page(vma, vmf->address, pte, vmf->vma_flags);
+	page = vm_normal_page(vma, vmf->address, pte);
 	if (!page) {
 		pte_unmap_unlock(vmf->pte, vmf->ptl);
 		return 0;
