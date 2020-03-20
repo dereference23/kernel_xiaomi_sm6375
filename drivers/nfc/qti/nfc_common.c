@@ -938,6 +938,9 @@ err_nfcc_reset_failed:
 		nfc_dev->nqx_info.info.fw_minor);
 
 	switch (nfc_dev->nqx_info.info.chip_type) {
+	case NFCC_PN557:
+		pr_debug("%s: ## NFCC == PN557 ##\n", __func__);
+		break;
 	case NFCC_SN100_A:
 	case NFCC_SN100_B:
 		pr_debug("%s: ## NFCC == SN100x ##\n", __func__);
