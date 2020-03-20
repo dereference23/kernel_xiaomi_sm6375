@@ -182,6 +182,7 @@ enum gpio_values {
 };
 
 enum nfcc_chip_variant {
+	NFCC_PN557 = 0x41,	    /**< NFCC PN557 */
 	NFCC_SN100_A = 0xa3,	    /**< NFCC SN100_A */
 	NFCC_SN100_B = 0xa4,	    /**< NFCC SN100_B */
 	NFCC_NOT_SUPPORTED = 0xFF		/**< NFCC is not supported */
