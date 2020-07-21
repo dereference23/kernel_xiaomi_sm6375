@@ -60,8 +60,6 @@ int gf_parse_dts(struct gf_dev *gf_dev)
 		gf_dev->custom_ldo_name = name;
 	#endif
 
-  
-	gf_dev->device_available = 1; 
 	mdelay(10);  
 
 	gf_dev->reset_gpio = of_get_named_gpio(np, "fp-gpio-reset", 0);
