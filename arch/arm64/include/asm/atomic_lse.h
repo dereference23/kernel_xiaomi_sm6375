@@ -16,6 +16,7 @@ __lse_atomic_##op(int i, atomic_t *v)					\
 {									\
 	asm volatile(							\
 	__LSE_PREAMBLE							\
+	"	prfm	pstl1strm, %[v]\n"				\
 	"	" #asm_op "	%w[i], %[v]\n"				\
 	: [v] "+Q" (v->counter)						\
 	: [i] "r" (i));							\
@@ -41,6 +42,7 @@ __lse_atomic_fetch_##op##name(int i, atomic_t *v)			\
 									\
 	asm volatile(							\
 	__LSE_PREAMBLE							\
+	"	prfm	pstl1strm, %[v]\n"				\
 	"	" #asm_op #mb "	%w[i], %w[old], %[v]"			\
 	: [v] "+Q" (v->counter),					\
 	  [old] "=r" (old)						\
@@ -123,6 +125,7 @@ __lse_atomic64_##op(s64 i, atomic64_t *v)				\
 {									\
 	asm volatile(							\
 	__LSE_PREAMBLE							\
+	"	prfm	pstl1strm, %[v]\n"				\
 	"	" #asm_op "	%[i], %[v]\n"				\
 	: [v] "+Q" (v->counter)						\
 	: [i] "r" (i));							\
@@ -148,6 +151,7 @@ __lse_atomic64_fetch_##op##name(s64 i, atomic64_t *v)			\
 									\
 	asm volatile(							\
 	__LSE_PREAMBLE							\
+	"	prfm	pstl1strm, %[v]\n"				\
 	"	" #asm_op #mb "	%[i], %[old], %[v]"			\
 	: [v] "+Q" (v->counter),					\
 	  [old] "=r" (old)						\
@@ -230,6 +234,7 @@ static __always_inline s64 __lse_atomic64_dec_if_positive(atomic64_t *v)
 
 	asm volatile(
 	__LSE_PREAMBLE
+	"	prfm	pstl1strm, %[v]\n"
 	"1:	ldr	%x[tmp], %[v]\n"
 	"	subs	%[ret], %x[tmp], #1\n"
 	"	b.lt	2f\n"
@@ -253,6 +258,7 @@ __lse__cmpxchg_case_##name##sz(volatile void *ptr,			\
 {									\
 	asm volatile(							\
 	__LSE_PREAMBLE							\
+	"	prfm	pstl1strm, %[v]\n"				\
 	"	cas" #mb #sfx "	%" #w "[old], %" #w "[new], %[v]\n"	\
 	: [v] "+Q" (*(u##sz *)ptr),					\
 	  [old] "+r" (old)						\
@@ -299,6 +305,7 @@ __lse__cmpxchg_double##name(unsigned long old1,				\
 									\
 	asm volatile(							\
 	__LSE_PREAMBLE							\
+	"	prfm	pstl1strm, %[v]\n"				\
 	"	casp" #mb "\t%[old1], %[old2], %[new1], %[new2], %[v]\n"\
 	"	eor	%[old1], %[old1], %[oldval1]\n"			\
 	"	eor	%[old2], %[old2], %[oldval2]\n"			\
