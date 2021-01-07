@@ -6365,7 +6365,10 @@ static int __ufshcd_issue_tm_cmd(struct ufs_hba *hba,
 	/*
 	 * blk_get_request() is used here only to get a free tag.
 	 */
-	req = blk_get_request(q, REQ_OP_DRV_OUT, BLK_MQ_REQ_RESERVED);
+	req = blk_get_request(q, REQ_OP_DRV_OUT, 0);
+	if (IS_ERR(req))
+		return PTR_ERR(req);
+
 	req->end_io_data = &wait;
 	ufshcd_hold(hba, false);
 
