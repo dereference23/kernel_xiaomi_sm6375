@@ -41,11 +41,17 @@ static uint32_t binder_alloc_debug_mask = BINDER_DEBUG_USER_ERROR;
 module_param_named(debug_mask, binder_alloc_debug_mask,
 		   uint, 0644);
 
+#ifdef DEBUG
 #define binder_alloc_debug(mask, x...) \
 	do { \
 		if (binder_alloc_debug_mask & mask) \
 			pr_info_ratelimited(x); \
 	} while (0)
+#else
+static inline void binder_alloc_debug(uint32_t mask, const char *fmt, ...)
+{
+}
+#endif
 
 static struct binder_buffer *binder_buffer_next(struct binder_buffer *buffer)
 {
