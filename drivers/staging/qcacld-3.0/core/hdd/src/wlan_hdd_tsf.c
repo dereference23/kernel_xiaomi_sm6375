@@ -2485,7 +2485,10 @@ static int __wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 		goto end;
 
 	if (tsf_cmd == QCA_TSF_CAPTURE || tsf_cmd == QCA_TSF_SYNC_GET) {
-		hdd_capture_tsf(adapter, tsf_op_resp, 1);
+		status = hdd_capture_tsf(adapter, tsf_op_resp, 1);
+		if (status != QDF_STATUS_SUCCESS)
+			goto end;
+
 		switch (tsf_op_resp[0]) {
 		case TSF_RETURN:
 			status = 0;
