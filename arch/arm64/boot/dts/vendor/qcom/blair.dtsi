@@ -389,6 +389,7 @@
 		reg = <0x0 0xd0000000 0x0 0x200000>;
 		record-size = <0x100000>;
 		pmsg-size = <0x100000>;
+		ecc-size = <0x10>;
 		max-reason = <4>;
 	};
 
