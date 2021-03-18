@@ -244,7 +244,6 @@ static int aarch32_alloc_kuser_vdso_page(void)
 	memcpy((void *)(vdso_page + 0x1000 - kuser_sz), __kuser_helper_start,
 	       kuser_sz);
 	aarch32_vdso_pages[C_VECTORS] = virt_to_page(vdso_page);
-	flush_dcache_page(aarch32_vdso_pages[C_VECTORS]);
 	return 0;
 }
 
@@ -276,7 +275,6 @@ static int __aarch32_alloc_vdso_pages(void)
 
 	memcpy((void *)sigpage, __aarch32_sigret_code_start, sigret_sz);
 	aarch32_vdso_pages[C_SIGPAGE] = virt_to_page(sigpage);
-	flush_dcache_page(aarch32_vdso_pages[C_SIGPAGE]);
 
 	ret = aarch32_alloc_kuser_vdso_page();
 	if (ret)
