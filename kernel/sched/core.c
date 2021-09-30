@@ -1486,6 +1486,9 @@ static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 
 	uclamp_rq_inc(rq, p);
 	p->sched_class->enqueue_task(rq, p, flags);
+#ifdef CONFIG_SPRD_ROTATION_TASK
+	p->last_enqueue_ts = sched_ktime_clock();
+#endif
 
 	trace_android_rvh_enqueue_task(rq, p);
 }
@@ -1950,7 +1953,7 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 	__set_task_cpu(p, new_cpu);
 }
 
-#ifdef CONFIG_NUMA_BALANCING
+#if defined(CONFIG_NUMA_BALANCING) || defined(CONFIG_SPRD_ROTATION_TASK)
 static void __migrate_swap_task(struct task_struct *p, int cpu)
 {
 	if (task_on_rq_queued(p)) {
@@ -2065,7 +2068,7 @@ int migrate_swap(struct task_struct *cur, struct task_struct *p,
 out:
 	return ret;
 }
-#endif /* CONFIG_NUMA_BALANCING */
+#endif /* CONFIG_NUMA_BALANCING || CONFIG_SPRD_ROTATION_TASK */
 
 /*
  * wait_task_inactive - wait for a thread to unschedule.
@@ -3788,6 +3791,10 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 	return ns;
 }
 
+#ifdef CONFIG_SPRD_ROTATION_TASK
+static DEFINE_RAW_SPINLOCK(rotation_lock);
+#endif
+
 /*
  * This function gets called by the timer code, with HZ frequency.
  * We call it with interrupts disabled.
@@ -3815,6 +3822,16 @@ void scheduler_tick(void)
 #ifdef CONFIG_SMP
 	rq->idle_balance = idle_cpu(cpu);
 	trigger_load_balance(rq);
+#endif
+
+#ifdef CONFIG_SPRD_ROTATION_TASK
+	if (curr->sched_class == &fair_sched_class) {
+		if (rq->misfit_task_load && curr->state == TASK_RUNNING) {
+			raw_spin_lock(&rotation_lock);
+			check_for_task_rotation(rq);
+			raw_spin_unlock(&rotation_lock);
+		}
+	}
 #endif
 
 	trace_android_vh_scheduler_tick(rq);
