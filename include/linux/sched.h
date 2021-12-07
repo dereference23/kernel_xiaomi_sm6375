@@ -558,7 +558,7 @@ sched_update_cpu_freq_min_max(const cpumask_t *cpus, u32 fmin, u32 fmax);
 extern int set_task_boost(int boost, u64 period);
 extern void walt_update_cluster_topology(void);
 
-#define RAVG_HIST_SIZE_MAX  5
+#define RAVG_HIST_SIZE_MAX 8
 #define NUM_BUSY_BUCKETS 10
 
 #define WALT_LOW_LATENCY_PROCFS	BIT(0)
