@@ -2235,7 +2235,8 @@ int goodix_ts_stage2_init(struct goodix_ts_core *core_data)
 	goodix_ts_procfs_init(core_data);
 
 	/* esd protector */
-	goodix_ts_esd_init(core_data);
+	if (core_data->ts_dev->board_data.esd_default_on)
+		goodix_ts_esd_init(core_data);
 
 	return 0;
 exit:

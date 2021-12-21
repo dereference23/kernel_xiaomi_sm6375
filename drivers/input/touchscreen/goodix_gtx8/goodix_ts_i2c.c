@@ -289,6 +289,11 @@ static int goodix_parse_dt(struct device_node *node,
 	ts_debug("[DT]x:%d, y:%d, w:%d, p:%d", board_data->panel_max_x,
 		 board_data->panel_max_y, board_data->panel_max_w,
 		 board_data->panel_max_p);
+
+	board_data->esd_default_on =
+		of_property_read_bool(node, "goodix,esd-default-on");
+	if (board_data->esd_default_on)
+		ts_info("goodix esd-default-on enabled");
 	return 0;
 }
 #endif
