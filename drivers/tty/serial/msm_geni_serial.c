@@ -3482,6 +3482,9 @@ static int msm_geni_serial_probe(struct platform_device *pdev)
 	if (!is_console)
 		spin_lock_init(&dev_port->rx_lock);
 
+	/* Set the flag to prevent to set up the console at runtime */
+	console_set_on_cmdline = 1;
+
 	ret = uart_add_one_port(drv, uport);
 	if (ret)
 		dev_err(&pdev->dev, "Failed to register uart_port: %d\n",
