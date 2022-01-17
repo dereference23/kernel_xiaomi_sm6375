@@ -18,6 +18,7 @@
 #include <linux/sched.h>
 #include <linux/shrinker.h>
 #include <linux/types.h>
+#include <linux/msm_dma_iommu_mapping.h>
 #include <uapi/linux/ion.h>
 
 /**
@@ -47,6 +48,7 @@ struct ion_buffer {
 	void *vaddr;
 	struct sg_table *sg_table;
 	struct list_head attachments;
+	struct msm_iommu_data iommu_data;
 };
 
 /**
