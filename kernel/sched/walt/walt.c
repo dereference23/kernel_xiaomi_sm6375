@@ -1869,7 +1869,7 @@ static void update_history(struct rq *rq, struct task_struct *p,
 			 u32 runtime, int samples, int event)
 {
 	u32 *hist = &p->wts.sum_history[0];
-	int ridx, widx;
+	int i;
 	u32 max = 0, avg, demand, pred_demand;
 	u64 sum = 0;
 	u16 demand_scaled, pred_demand_scaled;
@@ -1879,20 +1879,15 @@ static void update_history(struct rq *rq, struct task_struct *p,
 		goto done;
 
 	/* Push new 'runtime' value onto stack */
-	widx = sched_ravg_hist_size - 1;
-	ridx = widx - samples;
-	for (; ridx >= 0; --widx, --ridx) {
-		hist[widx] = hist[ridx];
-		sum += hist[widx];
-		if (hist[widx] > max)
-			max = hist[widx];
+	for (; samples > 0; samples--) {
+		hist[p->wts.cidx] = runtime;
+		p->wts.cidx = ++(p->wts.cidx) % sched_ravg_hist_size;
 	}
 
-	for (widx = 0; widx < samples && widx < sched_ravg_hist_size; widx++) {
-		hist[widx] = runtime;
-		sum += hist[widx];
-		if (hist[widx] > max)
-			max = hist[widx];
+	for (i = 0; i < sched_ravg_hist_size; i++) {
+		sum += hist[i];
+		if (hist[i] > max)
+			max = hist[i];
 	}
 
 	p->wts.sum = 0;
@@ -2246,6 +2241,7 @@ void init_new_task_load(struct task_struct *p)
 	p->wts.misfit = false;
 	p->wts.rtg_high_prio = false;
 	p->wts.unfilter = sysctl_sched_task_unfilter_period;
+	p->wts.cidx = 0;
 }
 
 void walt_task_dead(struct task_struct *p)
@@ -2274,6 +2270,7 @@ void reset_task_stats(struct task_struct *p)
 	p->wts.demand_scaled = 0;
 	p->wts.pred_demand_scaled = 0;
 	p->wts.active_time = 0;
+	p->wts.cidx = 0;
 }
 
 void mark_task_starting(struct task_struct *p)
