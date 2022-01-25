@@ -558,7 +558,13 @@ sched_update_cpu_freq_min_max(const cpumask_t *cpus, u32 fmin, u32 fmax);
 extern int set_task_boost(int boost, u64 period);
 extern void walt_update_cluster_topology(void);
 
-#define RAVG_HIST_SIZE_MAX 8
+/*
+ * RAVG_HIST_SHIFT trick can only be used if RAVG_HIST_SIZE is a power of 2.
+ */
+#define RAVG_HIST_SIZE 8
+#define RAVG_HIST_SHIFT 3
+#define RAVG_HIST_MASK (RAVG_HIST_SIZE - 1)
+
 #define NUM_BUSY_BUCKETS 10
 
 #define WALT_LOW_LATENCY_PROCFS	BIT(0)
@@ -601,7 +607,7 @@ struct walt_task_struct {
 	u64				mark_start;
 	u32				sum, demand;
 	u32				coloc_demand;
-	u32				sum_history[RAVG_HIST_SIZE_MAX];
+	u32				sum_history[RAVG_HIST_SIZE];
 	u32				curr_window_cpu[CONFIG_NR_CPUS], prev_window_cpu[CONFIG_NR_CPUS];
 	u32				curr_window, prev_window;
 	u32				pred_demand;
