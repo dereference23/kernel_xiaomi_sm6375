@@ -443,7 +443,7 @@ static int z_erofs_get_extent_compressedlen(struct z_erofs_maprecorder *m,
 		  m->type != Z_EROFS_VLE_CLUSTER_TYPE_HEAD);
 	if (!(map->m_flags & EROFS_MAP_ZIPPED) ||
 	    !(vi->z_advise & Z_EROFS_ADVISE_BIG_PCLUSTER_1)) {
-		map->m_plen = 1 << lclusterbits;
+		map->m_plen = 1ULL << lclusterbits;
 		return 0;
 	}
 
