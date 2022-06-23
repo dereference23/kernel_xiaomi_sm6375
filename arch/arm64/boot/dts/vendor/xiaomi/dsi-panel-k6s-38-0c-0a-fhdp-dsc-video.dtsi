@@ -3,6 +3,7 @@
 		qcom,mdss-dsi-panel-name = "xiaomi k6s 38 0c 0a fhd dsc video dsi panel";
 		qcom,dsi-ctrl-num = <0>;
 		qcom,dsi-phy-num = <0>;
+		qcom,mdss-dsi-bl-inverted-dbv;
 		qcom,mdss-dsi-panel-type = "dsi_video_mode";
 		qcom,mdss-dsi-virtual-channel-id = <0>;
 		qcom,mdss-dsi-stream = <0>;
