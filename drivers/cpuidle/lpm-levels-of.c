@@ -543,7 +543,6 @@ static int parse_cpu_levels(struct device_node *dn, struct lpm_cluster *c)
 	if (!cpu)
 		return -ENOMEM;
 
-	spin_lock_init(&cpu->cpu_lock);
 	if (get_cpumask_for_node(dn, &cpu->related_cpus))
 		return -EINVAL;
 
