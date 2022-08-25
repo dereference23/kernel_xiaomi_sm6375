@@ -55,11 +55,13 @@ static ssize_t show_time_in_state(struct cpufreq_policy *policy, char *buf)
 	struct cpufreq_stats *stats = policy->stats;
 	ssize_t len = 0;
 	int i;
-	unsigned long flags;
 
-	spin_lock_irqsave(&stats->lock, flags);
+	if (policy->fast_switch_enabled)
+		return 0;
+
+	spin_lock(&stats->lock);
 	cpufreq_stats_update(stats);
-	spin_unlock_irqrestore(&stats->lock, flags);
+	spin_unlock(&stats->lock);
 
 	for (i = 0; i < stats->state_num; i++) {
 		len += sprintf(buf + len, "%u %llu\n", stats->freq_table[i],
@@ -84,6 +86,9 @@ static ssize_t show_trans_table(struct cpufreq_policy *policy, char *buf)
 	struct cpufreq_stats *stats = policy->stats;
 	ssize_t len = 0;
 	int i, j;
+
+	if (policy->fast_switch_enabled)
+		return 0;
 
 	len += snprintf(buf + len, PAGE_SIZE - len, "   From  :    To\n");
 	len += snprintf(buf + len, PAGE_SIZE - len, "         : ");
@@ -222,7 +227,6 @@ void cpufreq_stats_record_transition(struct cpufreq_policy *policy,
 {
 	struct cpufreq_stats *stats = policy->stats;
 	int old_index, new_index;
-	unsigned long flags;
 
 	if (!stats) {
 		pr_debug("%s: No stats found\n", __func__);
@@ -236,11 +240,11 @@ void cpufreq_stats_record_transition(struct cpufreq_policy *policy,
 	if (old_index == -1 || new_index == -1 || old_index == new_index)
 		return;
 
-	spin_lock_irqsave(&stats->lock, flags);
+	spin_lock(&stats->lock);
 	cpufreq_stats_update(stats);
 
 	stats->last_index = new_index;
 	stats->trans_table[old_index * stats->max_state + new_index]++;
 	stats->total_trans++;
-	spin_unlock_irqrestore(&stats->lock, flags);
+	spin_unlock(&stats->lock);
 }
