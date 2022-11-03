@@ -59,7 +59,7 @@
 #define VER_MINOR	2
 #define PATCH_LEVEL 1
 
-#define WAKELOCK_HOLD_TIME 2000	/* in ms */
+#define WAKELOCK_HOLD_TIME 400	/* in ms */
 
 #define GF_SPIDEV_NAME	   "goodix,fingerprint"
 /*device name after register in charater*/
