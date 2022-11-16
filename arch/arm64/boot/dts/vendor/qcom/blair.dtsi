@@ -2286,6 +2286,7 @@
 				qcom,intents = <0x800  5
 						0x2000 3
 						0x4400 2>;
+				qcom,non-wake-svc = <0x190>;
 			};
 
 			qcom,adsp_glink_ssr {
