@@ -349,6 +349,7 @@ static void kgsl_destroy_ion(struct kgsl_memdesc *memdesc)
 
 	if (meta != NULL) {
 		remove_dmabuf_list(meta);
+		dma_buf_unmap_attachment(meta->attach, memdesc->sgt, DMA_BIDIRECTIONAL);
 		dma_buf_detach(meta->dmabuf, meta->attach);
 		dma_buf_put(meta->dmabuf);
 		kfree(meta);
@@ -2996,7 +2997,7 @@ static int kgsl_setup_dma_buf(struct kgsl_device *device,
 {
 	int ret = 0;
 	struct scatterlist *s;
-	struct sg_table *sg_table;
+	struct sg_table *sg_table = NULL;
 	struct dma_buf_attachment *attach = NULL;
 	struct kgsl_dma_buf_meta *meta;
 
@@ -3037,8 +3038,6 @@ static int kgsl_setup_dma_buf(struct kgsl_device *device,
 		ret = PTR_ERR(sg_table);
 		goto out;
 	}
-
-	dma_buf_unmap_attachment(attach, sg_table, DMA_BIDIRECTIONAL);
 
 	meta->table = sg_table;
 	entry->priv_data = meta;
@@ -3094,6 +3093,9 @@ skip_access_check:
 
 out:
 	if (ret) {
+		if (!IS_ERR_OR_NULL(sg_table))
+			dma_buf_unmap_attachment(attach, sg_table, DMA_BIDIRECTIONAL);
+
 		if (!IS_ERR_OR_NULL(attach))
 			dma_buf_detach(dmabuf, attach);
 
