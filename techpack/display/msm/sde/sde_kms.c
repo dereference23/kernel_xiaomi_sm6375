@@ -2249,7 +2249,7 @@ static int sde_kms_postinit(struct msm_kms *kms)
 	drm_for_each_connector_iter(conn, &conn_iter)
 		sde_connector_post_init(dev, conn);
 	drm_connector_list_iter_end(&conn_iter);
-	return rc;
+	return 0;
 }
 
 static long sde_kms_round_pixclk(struct msm_kms *kms, unsigned long rate,
