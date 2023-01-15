@@ -250,6 +250,7 @@ extern struct sde_dbg_reglog *sde_dbg_base_reglog;
 #define SDE_DBG_CTRL(...) sde_dbg_ctrl(__func__, ##__VA_ARGS__, \
 		SDE_DBG_DUMP_DATA_LIMITER)
 
+#ifdef CONFIG_DRM_MSM_DEBUG
 u32 sde_mini_dump_add_region(const char *name, u32 size, void *virt_addr);
 
 /**
@@ -474,5 +475,27 @@ static inline void sde_rsc_debug_dump(u32 mux_sel)
  */
 void sde_rsc_debug_dump(u32 mux_sel);
 #endif
+
+#else /* CONFIG_DRM_MSM_DEBUG */
+
+static inline void sde_evtlog_log(struct sde_dbg_evtlog *evtlog, const char *name, int line,
+	int flag, ...) { }
+static inline void sde_reglog_log(u8 blk_id, u32 val, u32 addr) { }
+static inline void sde_dbg_init_dbg_buses(u32 hwversion) { }
+static inline int sde_dbg_init(struct device *dev) { return 0; }
+static inline int sde_dbg_debugfs_register(struct device *dev) { return 0; }
+static inline void sde_dbg_destroy(void) { }
+static inline void sde_dbg_dump(enum sde_dbg_dump_context mode, const char *name, ...) { }
+static inline void sde_dbg_ctrl(const char *name, ...) { }
+static inline int sde_dbg_reg_register_base(const char *name, void __iomem *base,
+		size_t max_offset) { return 0; }
+static inline void sde_dbg_reg_register_dump_range(const char *base_name,
+	const char *range_name, u32 offset_start, u32 offset_end,
+	uint32_t xin_id) { }
+static inline int sde_dbg_dsi_ctrl_register(void __iomem *base, const char *name) { return 0; }
+static inline void sde_dbg_set_sde_top_offset(u32 blk_off) { }
+static inline void sde_dbg_set_hw_ownership_status(bool enable) { }
+
+#endif /* CONFIG_DRM_MSM_DEBUG */
 
 #endif /* SDE_DBG_H_ */
