@@ -2112,13 +2112,15 @@ static inline bool check_new_pcp(struct page *page)
 }
 #else
 /*
- * With DEBUG_VM disabled, free order-0 pages are checked for expected state
- * when pcp lists are being refilled from the free lists. With debug_pagealloc
- * enabled, they are also checked when being allocated from the pcp lists.
+ * With DEBUG_VM disabled, free order-0 pages are not checked for expected state
+ * unless debug_pagealloc is enabled.
  */
 static inline bool check_pcp_refill(struct page *page)
 {
-	return check_new_page(page);
+	if (debug_pagealloc_enabled_static())
+		return check_new_page(page);
+	else
+		return false;
 }
 static inline bool check_new_pcp(struct page *page)
 {
