@@ -329,7 +329,7 @@ do {									\
 	"	.previous\n"						\
 	_ASM_EXTABLE(1b, 3b)						\
 	: "+r" (err)							\
-	: "r" (x), "r" (addr), "i" (-EFAULT))
+	: "rZ" (x), "r" (addr), "i" (-EFAULT))
 
 #define __raw_put_user(x, ptr, err)					\
 do {									\
