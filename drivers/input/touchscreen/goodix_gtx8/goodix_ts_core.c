@@ -1266,7 +1266,7 @@ int goodix_ts_irq_enable(struct goodix_ts_core *core_data,
 		}
 	} else {
 		if (atomic_cmpxchg(&core_data->irq_enabled, 1, 0)) {
-			disable_irq(core_data->irq);
+			disable_irq_nosync(core_data->irq);
 			ts_debug("Irq disabled");
 		}
 	}
