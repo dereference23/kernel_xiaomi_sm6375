@@ -34,8 +34,7 @@ static inline u##sz __xchg_case_##name##sz(u##sz x, volatile void *ptr)		\
 	/* LSE atomics */							\
 	"	prfm	pstl1strm, %2\n"					\
 	"	swp" #acq_lse #rel #sfx "\t%" #w "3, %" #w "0, %2\n"		\
-		__nops(2)							\
-	"	" #nop_lse)							\
+		)								\
 	: "=&r" (ret), "=&r" (tmp), "+Q" (*(u##sz *)ptr)			\
 	: "r" (x)								\
 	: cl);									\
