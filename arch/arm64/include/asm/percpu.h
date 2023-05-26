@@ -63,7 +63,7 @@ __percpu_##name##_case_##sz(void *ptr, unsigned long val)		\
 	"	cbnz	%w[loop], 1b",					\
 	/* LSE atomics */						\
 		#op_lse "\t%" #w "[val], %[ptr]\n"			\
-		__nops(3))						\
+		)							\
 	: [loop] "=&r" (loop), [tmp] "=&r" (tmp),			\
 	  [ptr] "+Q"(*(u##sz *)ptr)					\
 	: [val] "r" ((u##sz)(val)));					\
@@ -85,7 +85,7 @@ __percpu_##name##_return_case_##sz(void *ptr, unsigned long val)	\
 	/* LSE atomics */						\
 		#op_lse "\t%" #w "[val], %" #w "[ret], %[ptr]\n"	\
 		#op_llsc "\t%" #w "[ret], %" #w "[ret], %" #w "[val]\n"	\
-		__nops(2))						\
+		)							\
 	: [loop] "=&r" (loop), [ret] "=&r" (ret),			\
 	  [ptr] "+Q"(*(u##sz *)ptr)					\
 	: [val] "r" ((u##sz)(val)));					\
