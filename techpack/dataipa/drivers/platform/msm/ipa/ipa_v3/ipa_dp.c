@@ -1969,7 +1969,9 @@ static void ipa3_wq_handle_rx(struct work_struct *work)
 
 	IPA_ACTIVE_CLIENTS_INC_EP(client_type);
 	if (sys->napi_obj) {
+		local_bh_disable();
 		napi_schedule(sys->napi_obj);
+		local_bh_enable();
 		IPA_STATS_INC_CNT(sys->napi_sch_cnt);
 	} else if (IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
 		tasklet_schedule(&sys->tasklet);
