@@ -326,8 +326,10 @@ static int scsi_vpd_inquiry(struct scsi_device *sdev, unsigned char *buffer,
 	 * I'm not convinced we need to try quite this hard to get VPD, but
 	 * all the existing users tried this hard.
 	 */
-	result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buffer,
-				  len, NULL, 30 * HZ, 3, NULL);
+	//result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buffer,
+	//			  len, NULL, 30 * HZ, 3, NULL);
+	result = scsi_execute(sdev, cmd, DMA_FROM_DEVICE, buffer,
+				len, NULL, NULL, 30 * HZ, 3, 0, RQF_PM, NULL);
 	if (result)
 		return -EIO;
 
@@ -509,8 +511,10 @@ int scsi_report_opcode(struct scsi_device *sdev, unsigned char *buffer,
 	put_unaligned_be32(len, &cmd[6]);
 	memset(buffer, 0, len);
 
-	result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buffer, len,
-				  &sshdr, 30 * HZ, 3, NULL);
+	//result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buffer, len,
+	//			  &sshdr, 30 * HZ, 3, NULL);
+	result = scsi_execute(sdev, cmd, DMA_FROM_DEVICE, buffer, len,
+				 NULL , &sshdr , 30 * HZ, 3, 0, RQF_PM, NULL);
 
 	if (result && scsi_sense_valid(&sshdr) &&
 	    sshdr.sense_key == ILLEGAL_REQUEST &&
