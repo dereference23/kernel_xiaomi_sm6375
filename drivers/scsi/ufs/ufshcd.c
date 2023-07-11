@@ -55,6 +55,9 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/ufs.h>
 
+/* only for samsung */
+#define VENDOR_IS_SAMSUNG	(hba->dev_info.wmanufacturerid == UFS_VENDOR_SAMSUNG)
+
 #define UFSHCD_ENABLE_INTRS	(UTP_TRANSFER_REQ_COMPL |\
 				 UTP_TASK_REQ_COMPL |\
 				 UFSHCD_ERROR_MASK)
@@ -74,7 +77,7 @@
 /* Query request retries */
 #define QUERY_REQ_RETRIES 3
 /* Query request timeout */
-#define QUERY_REQ_TIMEOUT 1500 /* 1.5 seconds */
+#define QUERY_REQ_TIMEOUT 3000 /* 3 seconds */
 
 /* Task management command timeout */
 #define TM_CMD_TIMEOUT	100 /* msecs */
@@ -2430,8 +2433,9 @@ void ufshcd_prepare_utp_scsi_cmd_upiu(struct ufshcd_lrb *lrbp, u32 upiu_flags)
 				UPIU_TRANSACTION_COMMAND, upiu_flags,
 				lrbp->lun, lrbp->task_tag);
 	ucd_req_ptr->header.dword_1 = UPIU_HEADER_DWORD(
-				UPIU_COMMAND_SET_TYPE_SCSI, 0, 0, 0);
-
+		(lrbp->cmd->cmnd[0] == 0xd0 ? UPIU_COMMAND_SET_TYPE_VENDOR_HY :
+					      UPIU_COMMAND_SET_TYPE_SCSI),
+				0, 0, 0);
 	/* Total EHS length and Data segment length will be zero */
 	ucd_req_ptr->header.dword_2 = 0;
 
@@ -2545,6 +2549,10 @@ static int ufshcd_comp_scsi_upiu(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 		lrbp->command_type = UTP_CMD_TYPE_SCSI;
 	else
 		lrbp->command_type = UTP_CMD_TYPE_UFS_STORAGE;
+
+	/*only for hynix HR*/
+	if (lrbp->cmd->cmnd[0] == 0xd0)
+		lrbp->command_type = UTP_CMD_TYPE_SCSI_VENDOR_HY;
 
 	if (likely(lrbp->cmd)) {
 		ufshcd_prepare_req_desc_hdr(lrbp, &upiu_flags,
@@ -3000,6 +3008,66 @@ out_unlock:
 }
 EXPORT_SYMBOL_GPL(ufshcd_query_flag);
 
+int ufshcd_query_flag_sel(struct ufs_hba *hba, enum query_opcode opcode,
+			  enum flag_idn idn, u8 index, u8 selector,
+			  bool *flag_res)
+{
+	struct ufs_query_req *request = NULL;
+	struct ufs_query_res *response = NULL;
+	int err = 0;
+	int timeout = QUERY_REQ_TIMEOUT;
+
+	BUG_ON(!hba);
+
+	ufshcd_hold(hba, false);
+	mutex_lock(&hba->dev_cmd.lock);
+	ufshcd_init_query(hba, &request, &response, opcode, idn, index,
+			  selector);
+
+	switch (opcode) {
+	case UPIU_QUERY_OPCODE_SET_FLAG:
+	case UPIU_QUERY_OPCODE_CLEAR_FLAG:
+	case UPIU_QUERY_OPCODE_TOGGLE_FLAG:
+		request->query_func = UPIU_QUERY_FUNC_STANDARD_WRITE_REQUEST;
+		break;
+	case UPIU_QUERY_OPCODE_READ_FLAG:
+		request->query_func = UPIU_QUERY_FUNC_STANDARD_READ_REQUEST;
+		if (!flag_res) {
+			/* No dummy reads */
+			dev_err(hba->dev,
+				"%s: Invalid argument for read request\n",
+				__func__);
+			err = -EINVAL;
+			goto out_unlock;
+		}
+		break;
+	default:
+		dev_err(hba->dev,
+			"%s: Expected query flag opcode but got = %d\n",
+			__func__, opcode);
+		err = -EINVAL;
+		goto out_unlock;
+	}
+
+	err = ufshcd_exec_dev_cmd(hba, DEV_CMD_TYPE_QUERY, timeout);
+
+	if (err) {
+		dev_err(hba->dev,
+			"%s: Sending flag query for idn %d failed, err = %d\n",
+			__func__, idn, err);
+		goto out_unlock;
+	}
+
+	if (flag_res)
+		*flag_res = (be32_to_cpu(response->upiu_res.value) &
+			     MASK_QUERY_UPIU_FLAG_LOC) &
+			    0x1;
+
+out_unlock:
+	mutex_unlock(&hba->dev_cmd.lock);
+	ufshcd_release(hba);
+	return err;
+}
 /**
  * ufshcd_query_attr - API function for sending attribute requests
  * @hba: per-adapter instance
@@ -3729,6 +3797,33 @@ static int ufshcd_dme_link_startup(struct ufs_hba *hba)
 			"dme-link-startup: error code %d\n", ret);
 	return ret;
 }
+
+static int ufshcd_query_flag_sel_retry(struct ufs_hba *hba,
+				       enum query_opcode opcode,
+				       enum flag_idn idn, u8 index, u8 selector,
+				       bool *flag_res)
+{
+	int ret;
+	int retries;
+
+	for (retries = 0; retries < QUERY_REQ_RETRIES; retries++) {
+		ret = ufshcd_query_flag_sel(hba, opcode, idn, index, selector,
+					    flag_res);
+		if (ret)
+			dev_dbg(hba->dev,
+				"%s: failed with error %d, retries %d\n",
+				__func__, ret, retries);
+		else
+			break;
+	}
+
+	if (ret)
+		dev_err(hba->dev,
+			"%s: query attribute, opcode %d, idn %d, failed with error %d after %d retires\n",
+			__func__, opcode, idn, ret, retries);
+	return ret;
+}
+
 /**
  * ufshcd_dme_reset - UIC command for DME_RESET
  * @hba: per adapter instance
@@ -5480,8 +5575,14 @@ int ufshcd_wb_ctrl(struct ufs_hba *hba, bool enable)
 		opcode = UPIU_QUERY_OPCODE_CLEAR_FLAG;
 
 	index = ufshcd_wb_get_query_index(hba);
-	ret = ufshcd_query_flag_retry(hba, opcode,
-				      QUERY_FLAG_IDN_WB_EN, index, NULL);
+	if (VENDOR_IS_SAMSUNG)
+		ret = ufshcd_query_flag_sel_retry(hba, opcode,
+						  QUERY_FLAG_IDN_WB_EN, index,
+						  1, NULL); //Samsung selector 1
+	else
+		ret = ufshcd_query_flag_sel_retry(hba, opcode,
+						  QUERY_FLAG_IDN_WB_EN, index,
+						  0, NULL); //Other selector 0
 	if (ret) {
 		dev_err(hba->dev, "%s write booster %s failed %d\n",
 			__func__, enable ? "enable" : "disable", ret);
@@ -5507,9 +5608,15 @@ static int ufshcd_wb_toggle_flush_during_h8(struct ufs_hba *hba, bool set)
 		val = UPIU_QUERY_OPCODE_CLEAR_FLAG;
 
 	index = ufshcd_wb_get_query_index(hba);
-	return ufshcd_query_flag_retry(hba, val,
-				QUERY_FLAG_IDN_WB_BUFF_FLUSH_DURING_HIBERN8,
-				index, NULL);
+
+	if (VENDOR_IS_SAMSUNG)
+		return ufshcd_query_flag_sel_retry(
+			hba, val, QUERY_FLAG_IDN_WB_BUFF_FLUSH_DURING_HIBERN8,
+			index, 1, NULL);
+	else
+		return ufshcd_query_flag_sel_retry(
+			hba, val, QUERY_FLAG_IDN_WB_BUFF_FLUSH_DURING_HIBERN8,
+			index, 0, NULL);
 }
 
 static inline void ufshcd_wb_toggle_flush(struct ufs_hba *hba, bool enable)
@@ -5533,9 +5640,14 @@ static int ufshcd_wb_buf_flush_enable(struct ufs_hba *hba)
 		return 0;
 
 	index = ufshcd_wb_get_query_index(hba);
-	ret = ufshcd_query_flag_retry(hba, UPIU_QUERY_OPCODE_SET_FLAG,
-				      QUERY_FLAG_IDN_WB_BUFF_FLUSH_EN,
-				      index, NULL);
+	if (VENDOR_IS_SAMSUNG)
+		ret = ufshcd_query_flag_sel_retry(
+			hba, UPIU_QUERY_OPCODE_SET_FLAG,
+			QUERY_FLAG_IDN_WB_BUFF_FLUSH_EN, index, 1, NULL);
+	else
+		ret = ufshcd_query_flag_sel_retry(
+			hba, UPIU_QUERY_OPCODE_SET_FLAG,
+			QUERY_FLAG_IDN_WB_BUFF_FLUSH_EN, index, 0, NULL);
 	if (ret)
 		dev_err(hba->dev, "%s WB - buf flush enable failed %d\n",
 			__func__, ret);
@@ -5555,9 +5667,14 @@ static int ufshcd_wb_buf_flush_disable(struct ufs_hba *hba)
 		return 0;
 
 	index = ufshcd_wb_get_query_index(hba);
-	ret = ufshcd_query_flag_retry(hba, UPIU_QUERY_OPCODE_CLEAR_FLAG,
-				      QUERY_FLAG_IDN_WB_BUFF_FLUSH_EN,
-				      index, NULL);
+	if (VENDOR_IS_SAMSUNG)
+		ret = ufshcd_query_flag_sel_retry(
+			hba, UPIU_QUERY_OPCODE_CLEAR_FLAG,
+			QUERY_FLAG_IDN_WB_BUFF_FLUSH_EN, index, 1, NULL);
+	else
+		ret = ufshcd_query_flag_sel_retry(
+			hba, UPIU_QUERY_OPCODE_CLEAR_FLAG,
+			QUERY_FLAG_IDN_WB_BUFF_FLUSH_EN, index, 0, NULL);
 	if (ret) {
 		dev_warn(hba->dev, "%s: WB - buf flush disable failed %d\n",
 			 __func__, ret);
@@ -5577,7 +5694,12 @@ static bool ufshcd_wb_presrv_usrspc_keep_vcc_on(struct ufs_hba *hba,
 	u8 index;
 
 	index = ufshcd_wb_get_query_index(hba);
-	ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
+	if (VENDOR_IS_SAMSUNG)
+		ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
+					      QUERY_ATTR_IDN_CURR_WB_BUFF_SIZE,
+					      index, 1, &cur_buf);
+	else
+		ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
 					      QUERY_ATTR_IDN_CURR_WB_BUFF_SIZE,
 					      index, 0, &cur_buf);
 	if (ret) {
@@ -5618,9 +5740,14 @@ static bool ufshcd_wb_need_flush(struct ufs_hba *hba)
 	 * keeping vcc on when current buffer is empty.
 	 */
 	index = ufshcd_wb_get_query_index(hba);
-	ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
-				      QUERY_ATTR_IDN_AVAIL_WB_BUFF_SIZE,
-				      index, 0, &avail_buf);
+	if (VENDOR_IS_SAMSUNG)
+		ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
+					      QUERY_ATTR_IDN_AVAIL_WB_BUFF_SIZE,
+					      index, 1, &avail_buf);
+	else
+		ret = ufshcd_query_attr_retry(hba, UPIU_QUERY_OPCODE_READ_ATTR,
+					      QUERY_ATTR_IDN_AVAIL_WB_BUFF_SIZE,
+					      index, 0, &avail_buf);
 	if (ret) {
 		dev_warn(hba->dev, "%s dAvailableWriteBoosterBufferSize read failed %d\n",
 			 __func__, ret);
