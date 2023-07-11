@@ -1,4 +1,4 @@
-subdir-ccflags-y += -Wall -Werror -DCONFIG_RT_REGMAP
+subdir-ccflags-y += -DCONFIG_RT_REGMAP
 obj-$(CONFIG_DUAL_ROLE_USB_INTF)	+= class-dual-role.o xm_adapter_class.o xm_pd_adapter.o
 obj-$(CONFIG_TCPC_RT1711H)		+= tcpc_rt1711h.o
 
