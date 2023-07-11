@@ -1438,6 +1438,19 @@ extern struct dentry *snd_soc_debugfs_root;
 
 extern const struct dev_pm_ops snd_soc_pm_ops;
 
+#ifdef CONFIG_WT_QGKI
+enum smartpa_type {
+	PA_INVALID = -1,
+	FS16XX,
+	AW88261,
+	TAS2558,
+	FS1962,
+	PA_MAX_NUM,
+};
+
+void snd_soc_set_smartpa_type(const char *name, enum smartpa_type pa_type);
+#endif
+
 /* Helper functions */
 static inline void snd_soc_dapm_mutex_lock(struct snd_soc_dapm_context *dapm)
 {
