@@ -68,6 +68,13 @@ static LIST_HEAD(unbind_card_list);
 struct snd_soc_dai_link_component null_dailink_component[0];
 EXPORT_SYMBOL_GPL(null_dailink_component);
 
+#ifdef CONFIG_WT_QGKI
+static DEFINE_MUTEX(smartpa_mutex);
+static enum smartpa_type smartpa_type = PA_INVALID;
+module_param(smartpa_type, int, S_IRUSR | S_IRGRP | S_IROTH);
+MODULE_PARM_DESC(smartpa_type, "Show SmartPA type");
+#endif
+
 /*
  * This is a timeout to do a DAPM powerdown after a stream is closed().
  * It can be used to eliminate pops between different playback streams, e.g.
@@ -2735,6 +2742,22 @@ static void snd_soc_component_setup_regmap(struct snd_soc_component *component)
 	if (val_bytes > 0)
 		component->val_bytes = val_bytes;
 }
+
+#ifdef CONFIG_WT_QGKI
+void snd_soc_set_smartpa_type(const char *name, enum smartpa_type pa_type)
+{
+	pr_info("%s driver set smartpa type %d\n", name, pa_type);
+
+	if (pa_type > PA_INVALID && pa_type < PA_MAX_NUM) {
+		mutex_lock(&smartpa_mutex);
+		smartpa_type = pa_type;
+		mutex_unlock(&smartpa_mutex);
+	} else {
+		pr_err("this PA is not supported\n");
+	}
+}
+EXPORT_SYMBOL_GPL(snd_soc_set_smartpa_type);
+#endif
 
 #ifdef CONFIG_REGMAP
 
