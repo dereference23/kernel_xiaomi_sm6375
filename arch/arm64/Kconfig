@@ -1833,6 +1833,11 @@ config DMI
 
 endmenu
 
+config WT_QGKI
+        bool "QGKI build"
+        help
+          Enable Wingtech changes for QGKI.
+
 choice
 	prompt "Kernel compression method"
 	default BUILD_ARM64_KERNEL_COMPRESSION_GZIP
