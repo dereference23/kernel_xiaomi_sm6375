@@ -1117,7 +1117,11 @@ static inline bool ufshcd_is_auto_hibern8_enabled(struct ufs_hba *hba)
 
 static inline bool ufshcd_is_wb_allowed(struct ufs_hba *hba)
 {
+#if 0
 	return hba->caps & UFSHCD_CAP_WB_EN;
+#else
+	return false;
+#endif
 }
 
 #define ufshcd_writel(hba, val, reg)	\
