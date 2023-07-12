@@ -611,6 +611,7 @@ static void wcd_mbhc_adc_detect_plug_type(struct wcd_mbhc *mbhc)
 	if (mbhc->mbhc_cb->mbhc_micbias_control) {
 		mbhc->mbhc_cb->mbhc_micbias_control(component, MIC_BIAS_2,
 						    MICB_ENABLE);
+		mbhc->micbias_enable = true;
 	} else {
 		pr_err("%s: Mic Bias is not enabled\n", __func__);
 		return;
