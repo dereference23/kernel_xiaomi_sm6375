@@ -141,4 +141,15 @@ config CHARGER_SC8551
 	  Say Y here to enable support of sc8551 divider charger
 	  It is mainly used as divider charger for
 	  direct charge
+
+config DISABLE_TEMP_PROTECT
+	bool "Control of temp protect"
+	help
+	  Say Y here to enable a function which disables temp protect.
+	  WARNING: Only SCM could open it.
+
+config WT_CHG
+	tristate "Wingtech Charger"
+	help
+	  Say Y to enable support for WT_CHG charger driver
 endif
