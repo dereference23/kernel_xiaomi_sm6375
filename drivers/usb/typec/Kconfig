@@ -65,4 +65,6 @@ source "drivers/usb/typec/mux/Kconfig"
 
 source "drivers/usb/typec/altmodes/Kconfig"
 
+source "drivers/usb/typec/tcpc/Kconfig"
+
 endif # TYPEC
