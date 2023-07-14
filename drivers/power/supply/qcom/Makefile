@@ -17,3 +17,4 @@ obj-$(CONFIG_QTI_QBG)	+= qti-qbg-main.o
 qti-qbg-main-y	+= qti-qbg.o qbg-sdam.o qbg-battery-profile.o battery-profile-loader.o
 
 obj-$(CONFIG_BQ2589X_CHARGER)		+= bq2589x_charger.o
+obj-$(CONFIG_FUEL_GAUGE_BQ27Z561)	+= bq27z561.o
