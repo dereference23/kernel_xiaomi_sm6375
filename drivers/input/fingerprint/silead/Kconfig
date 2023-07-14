@@ -1,0 +1,8 @@
+#
+# Silead Fingerprint driver configuration
+#
+
+config FINGERPRINT_SILEAD
+        tristate "Silead Fingerprint driver support"
+        help
+	  This supports Silead Fingerprint drivers.
