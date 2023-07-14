@@ -133,4 +133,12 @@ config CHARGER_LN8000
 	  Say Y here to enable support of ln8000 divider charger
 	  It is mainly used as divider charger for
 	  direct charge
+
+config CHARGER_SC8551
+	tristate "SC8551 Divider Charger Driver"
+	depends on I2C
+	help
+	  Say Y here to enable support of sc8551 divider charger
+	  It is mainly used as divider charger for
+	  direct charge
 endif
