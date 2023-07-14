@@ -22,3 +22,4 @@ obj-$(CONFIG_CHARGER_LN8000)		+= ln8000_charger.o
 obj-$(CONFIG_CHARGER_LN8000)		+= ln8000_charger_2.o
 obj-$(CONFIG_CHARGER_SC8551)		+= sc8551_charger.o
 obj-$(CONFIG_CHARGER_SC8551)		+= pd_policy_manager.o
+obj-$(CONFIG_WT_CHG)			+= wt_chg.o
