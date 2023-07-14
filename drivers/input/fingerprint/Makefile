@@ -7,3 +7,4 @@
 
 obj-$(CONFIG_FINGERPRINT_FPC)		+= fpc/
 obj-$(CONFIG_FINGERPRINT_GOODIX_FOD)	+= goodix/
+obj-$(CONFIG_FINGERPRINT_SILEAD)	+= silead/
