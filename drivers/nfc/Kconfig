@@ -71,6 +71,16 @@ config NFC_QTI_I2C
 
 	  If unsure, say N.
 
+config NFC_PN557
+        tristate "QTI NCI based NFC Controller Driver for NQx"
+        depends on I2C
+        help
+          This enables the NFC driver for NQx based devices.
+          This is for I2C connected version. NCI protocol logic
+          resides in the usermode and it has no other NFC dependencies.
+
+	  If unsure, say N.
+
 config NFC_QTI_I3C_GPIO
 	tristate "QTI Driver to configure NFC GPIOs for SNxxx I3C modules"
 	help
