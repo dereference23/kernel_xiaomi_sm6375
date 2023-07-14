@@ -125,4 +125,12 @@ config FUEL_GAUGE_BQ27Z561
 	depends on I2C
 	help
 	  Say Y to enable support for TI bq27z561 fuel gauge driver
+
+config CHARGER_LN8000
+	tristate "LN8000 Divider Charger Driver"
+	depends on I2C
+	help
+	  Say Y here to enable support of ln8000 divider charger
+	  It is mainly used as divider charger for
+	  direct charge
 endif
