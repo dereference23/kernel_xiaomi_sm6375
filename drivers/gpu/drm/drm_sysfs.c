@@ -238,16 +238,31 @@ static ssize_t modes_show(struct device *device,
 	return written;
 }
 
+#ifdef CONFIG_WT_QGKI
+static ssize_t panel_info_show(struct device *device,
+			       struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE,
+			"panel_name=dsi_k6s_38_0c_0a_fhdp_dsc_vid_display\n");
+}
+#endif
+
 static DEVICE_ATTR_RW(status);
 static DEVICE_ATTR_RO(enabled);
 static DEVICE_ATTR_RO(dpms);
 static DEVICE_ATTR_RO(modes);
+#ifdef CONFIG_WT_QGKI
+static DEVICE_ATTR_RO(panel_info);
+#endif
 
 static struct attribute *connector_dev_attrs[] = {
 	&dev_attr_status.attr,
 	&dev_attr_enabled.attr,
 	&dev_attr_dpms.attr,
 	&dev_attr_modes.attr,
+#ifdef CONFIG_WT_QGKI
+	&dev_attr_panel_info.attr,
+#endif
 	NULL
 };
 
