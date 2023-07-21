@@ -42,7 +42,6 @@
 #define TP_ENTER_SLEEP_CMD	"poor-en"
 #define TP_EXIT_SLEEP_CMD	"poor-off"
 
-extern int goodix_i2c_write(struct goodix_ts_device *dev, unsigned int reg, unsigned char *data, unsigned int len);
 static int goodix_ts_remove(struct platform_device *pdev);
 static int goodix_ts_suspend(struct goodix_ts_core *core_data);
 int goodix_start_later_init(struct goodix_ts_core *ts_core);
@@ -71,18 +70,6 @@ int core_module_prob_sate = CORE_MODULE_UNPROBED;
  * to register into touch core modules structure
  * return 0 on success, otherwise return < 0
  */
-
-
-#if TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-static struct xiaomi_touch_interface xiaomi_touch_interfaces;
-static int gtp_get_mode_value(int mode, int value_type);
-static int gtp_get_mode_all(int mode, int *value);
-static int gtp_reset_mode(int mode);
-static int gtp_set_cur_value(int fts_mode, int fts_value);
-static void gtp_init_touchmode_data(void);
-#endif
-
-
 
 int wt_gsx_tp_gesture_callback(bool flag)
 {
@@ -2396,256 +2383,6 @@ out:
 	return 0;
 }
 
-/* add xiaomi game mode start */
-#if TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-
-static void gtp_init_touchmode_data(void)
-{
-	int i;
-	ts_info("ENTER into");
-	/* Touch Game Mode Switch */
-	xiaomi_touch_interfaces.touch_mode[Touch_Game_Mode][GET_MAX_VALUE] = 1;
-	xiaomi_touch_interfaces.touch_mode[Touch_Game_Mode][GET_MIN_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Game_Mode][GET_DEF_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Game_Mode][SET_CUR_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Game_Mode][GET_CUR_VALUE] = 0;
-
-	/* Active Mode */
-	xiaomi_touch_interfaces.touch_mode[Touch_Active_MODE][GET_MAX_VALUE] = 1;
-	xiaomi_touch_interfaces.touch_mode[Touch_Active_MODE][GET_MIN_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Active_MODE][GET_DEF_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Active_MODE][SET_CUR_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Active_MODE][GET_CUR_VALUE] = 0;
-
-	/* sensivity */
-	xiaomi_touch_interfaces.touch_mode[Touch_UP_THRESHOLD][GET_MAX_VALUE] = 4;
-	xiaomi_touch_interfaces.touch_mode[Touch_UP_THRESHOLD][GET_MIN_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_UP_THRESHOLD][GET_DEF_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_UP_THRESHOLD][SET_CUR_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_UP_THRESHOLD][GET_CUR_VALUE] = 0;
-
-	/*  Tolerance */
-	xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][GET_MAX_VALUE] = 4;
-	xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][GET_MIN_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][GET_DEF_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][SET_CUR_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][GET_CUR_VALUE] = 0;
-
-	/* edge filter orientation */
-	xiaomi_touch_interfaces.touch_mode[Touch_Panel_Orientation][GET_MAX_VALUE] = 3;
-	xiaomi_touch_interfaces.touch_mode[Touch_Panel_Orientation][GET_MIN_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Panel_Orientation][GET_DEF_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Panel_Orientation][SET_CUR_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Panel_Orientation][GET_CUR_VALUE] = 0;
-
-	/* edge filter area */
-	xiaomi_touch_interfaces.touch_mode[Touch_Edge_Filter][GET_MAX_VALUE] = 3;
-	xiaomi_touch_interfaces.touch_mode[Touch_Edge_Filter][GET_MIN_VALUE] = 0;
-	xiaomi_touch_interfaces.touch_mode[Touch_Edge_Filter][GET_DEF_VALUE] = 2;
-	xiaomi_touch_interfaces.touch_mode[Touch_Edge_Filter][SET_CUR_VALUE] = 2;
-	xiaomi_touch_interfaces.touch_mode[Touch_Edge_Filter][GET_CUR_VALUE] = 2;
-
-	for (i = 0; i < Touch_Mode_NUM; i++) {
-		ts_info("mode:%d, set cur:%d, get cur:%d, def:%d min:%d max:%d",
-				i,
-				xiaomi_touch_interfaces.touch_mode[i][SET_CUR_VALUE],
-				xiaomi_touch_interfaces.touch_mode[i][GET_CUR_VALUE],
-				xiaomi_touch_interfaces.touch_mode[i][GET_DEF_VALUE],
-				xiaomi_touch_interfaces.touch_mode[i][GET_MIN_VALUE],
-				xiaomi_touch_interfaces.touch_mode[i][GET_MAX_VALUE]);
-
-	}
-
-	return;
-}
-
-static int gtp_set_cur_value(int gtp_mode, int gtp_value)
-{
-
-	struct goodix_ts_device *dev = goodix_core_data->ts_dev;
-	struct goodix_ts_core *cd = goodix_modules.core_data;
-	u8 gtp_game_value[2] = {0,};
-	u8 state_data[5] = {0};
-	unsigned int check_sum = 0;
-	u8 temp_value = 0;
-	int ret = 0;
-	int i = 0;
-
-	if (gtp_mode >= Touch_Mode_NUM && gtp_mode < 0) {
-		ts_err("fts mode is error:%d", gtp_mode);
-		return -EINVAL;
-
-	} else if (xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] >
-			xiaomi_touch_interfaces.touch_mode[gtp_mode][GET_MAX_VALUE]) {
-
-		xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] =
-			xiaomi_touch_interfaces.touch_mode[gtp_mode][GET_MAX_VALUE];
-
-
-	} else if (xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] <
-			xiaomi_touch_interfaces.touch_mode[gtp_mode][GET_MIN_VALUE]) {
-
-		xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] =
-			xiaomi_touch_interfaces.touch_mode[gtp_mode][GET_MIN_VALUE];
-
-	}
-
-	xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE] = gtp_value;
-
-	ts_info("gtp_mode:%d,gtp_vlue:%d", gtp_mode, gtp_value);
-
-	for (i = 0; i < Touch_Mode_NUM; i++) {
-		switch (i) {
-		case Touch_Game_Mode:
-			temp_value = xiaomi_touch_interfaces.touch_mode[Touch_Game_Mode][SET_CUR_VALUE];
-			if (temp_value)
-				goodix_core_data->gamemode_on = true;
-			else
-				goodix_core_data->gamemode_on = false;
-			break;
-		case Touch_Active_MODE:
-			break;
-		case Touch_Panel_Orientation:
-			/* 0,1,2,3 = 0, 90, 180,270 */
-			temp_value = xiaomi_touch_interfaces.touch_mode[Touch_Panel_Orientation][SET_CUR_VALUE];
-			if (temp_value == 0 || temp_value == 2) {
-				temp_value = 0;
-			} else if (temp_value == 1) {
-				temp_value = 1;
-			} else if (temp_value == 3) {
-				temp_value = 2;
-			}
-			gtp_game_value[0] &= 0x3F;
-			gtp_game_value[0] |= temp_value << 6;
-			break;
-		case Touch_UP_THRESHOLD:
-			/* level 0,1,2,3 for Tap sensivity,sensivity get stronger with 0 to 3 */
-			temp_value = xiaomi_touch_interfaces.touch_mode[Touch_UP_THRESHOLD][SET_CUR_VALUE];
-			gtp_game_value[0] &= 0xF8;
-			gtp_game_value[0] |= temp_value;
-			break;
-		case Touch_Tolerance:
-			/* level 0,1,2,3 for Follow_hand_performance,get stronger with 0 to 3 */
-			temp_value = xiaomi_touch_interfaces.touch_mode[Touch_Tolerance][SET_CUR_VALUE];
-			gtp_game_value[0] &= 0xC7;
-			gtp_game_value[0] |= temp_value << 3;
-			break;
-		case Touch_Edge_Filter:
-			/* filter 0,1,2,3  */
-			temp_value = xiaomi_touch_interfaces.touch_mode[Touch_Edge_Filter][SET_CUR_VALUE];
-			gtp_game_value[1] &= 0x3F;
-			gtp_game_value[1] |= (temp_value << 6);
-			break;
-		case Touch_Aod_Enable:
-			temp_value = xiaomi_touch_interfaces.touch_mode[Touch_Aod_Enable][SET_CUR_VALUE];
-			if (temp_value == 1) {
-				cd->aod_changed = 1;
-				ts_info("temp_value:%d,aod_changed:%d",temp_value,cd->aod_changed);
-			} else {
-				cd->aod_changed = 0;
-				ts_info("temp_value:%d,aod_changed:%d",temp_value,cd->aod_changed);
-			}
-		default:
-			/* Don't support */
-			break;
-		}
-	}
-	xiaomi_touch_interfaces.touch_mode[gtp_mode][GET_CUR_VALUE] =
-		xiaomi_touch_interfaces.touch_mode[gtp_mode][SET_CUR_VALUE];
-	if (xiaomi_touch_interfaces.touch_mode[Touch_Game_Mode][SET_CUR_VALUE]) {
-
-		if (goodix_core_data->gamemode_on)
-			state_data[0] = GTP_GAME_CMD_ENTER;
-		else
-			state_data[0] = GTP_GAME_CMD_EXIT;
-
-		state_data[1] = gtp_game_value[0];
-		state_data[2] = gtp_game_value[1];
-		check_sum = state_data[0] + state_data[1] + state_data[2];
-		state_data[3] = (check_sum >> 8) & 0xFF;
-		state_data[4] = check_sum & 0xFF;
-		ts_info("write state_data[0]=0x%02X, state_data[1]=0x%02X, state_data[2]=0x%02X, state_data[3]=0x%02X, state_data[4]=0x%02X",
-			state_data[0], state_data[1], state_data[2],
-			state_data[3], state_data[4]);
-		cd->gtp_game = 1;
-		}
-
-	for (i = 0; i < 5; i++) {
-		ret = goodix_i2c_write(dev, GTP_GAME_CMD_ADD + i, &state_data[i], 1);
-		if (ret < 0) {
-			ts_err("send game mode fail");
-		}
-	}
-	return 0;
-}
-
-static int gtp_get_mode_value(int mode, int value_type)
-{
-	int value = -1;
-	if (mode < Touch_Mode_NUM && mode >= 0)
-		value = xiaomi_touch_interfaces.touch_mode[mode][value_type];
-	else
-		ts_err("don't support\n");
-
-	return value;
-
-}
-
-static int gtp_get_mode_all(int mode, int *value)
-{
-	if (mode < Touch_Mode_NUM && mode >= 0) {
-		value[0] = xiaomi_touch_interfaces.touch_mode[mode][GET_CUR_VALUE];
-		value[1] = xiaomi_touch_interfaces.touch_mode[mode][GET_DEF_VALUE];
-		value[2] = xiaomi_touch_interfaces.touch_mode[mode][GET_MIN_VALUE];
-		value[3] = xiaomi_touch_interfaces.touch_mode[mode][GET_MAX_VALUE];
-
-	} else {
-		ts_err("don't support\n");
-
-	}
-	ts_info("mode:%d, value:%d:%d:%d:%d", mode, value[0], value[1], value[2], value[3]);
-
-	return 0;
-
-}
-
-static int gtp_reset_mode(int mode)
-{
-	//int i = 0;
-
-	struct goodix_ts_core *cd = goodix_modules.core_data;
-	ts_info("gtp_reset_game_mode enter");
-	goodix_set_global_mode(cd ,0,2,3,0,0);
-/*
-	if (mode < Touch_Mode_NUM && mode > 0) {
-		xiaomi_touch_interfaces.touch_mode[mode][SET_CUR_VALUE] =
-			xiaomi_touch_interfaces.touch_mode[mode][GET_DEF_VALUE];
-		gtp_set_cur_value(mode, xiaomi_touch_interfaces.touch_mode[mode][SET_CUR_VALUE]);
-
-	} else if (mode == 0) {
-		for (i = Touch_Mode_NUM-1; i >= 0; i--) {
-			xiaomi_touch_interfaces.touch_mode[i][SET_CUR_VALUE] =
-				xiaomi_touch_interfaces.touch_mode[i][GET_DEF_VALUE];
-			gtp_set_cur_value(i, xiaomi_touch_interfaces.touch_mode[mode][SET_CUR_VALUE]);
-
-		}
-
-	} else {
-		ts_err("don't support");
-
-	}
-*/
-	mode = 0;
-	cd->gtp_game = 0;
-	ts_info("gtp_game mode = %d",cd->gtp_game);
-	ts_info("mode:%d", mode);
-
-	return 0;
-
-}
-#endif
-/* add xiaomi game mode end */
-
 #if defined(CONFIG_DRM)
 static void goodix_ts_resume_work(struct work_struct *work)
 {
@@ -3047,35 +2784,6 @@ static int goodix_ts_probe(struct platform_device *pdev)
 #ifndef CONFIG_WT_QGKI
 	goodix_tools_init();
 #endif
-	/* add xiaomi game mode start */
-#if defined(CONFIG_WT_QGKI)	
-	if (core_data->gtp_tp_class == NULL) {
-#if TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-		core_data->gtp_tp_class = get_xiaomi_touch_class();
-#endif
-		if (core_data->gtp_tp_class) {
-			core_data->gtp_touch_dev = device_create(core_data->gtp_tp_class, NULL, 0x38, core_data, "tp_dev");
-			if (IS_ERR(core_data->gtp_touch_dev)) {
-				ts_err("Failed to create device !");
-				goto err_class_create;
-			}
-			dev_set_drvdata(core_data->gtp_touch_dev, core_data);
-#endif			
-#if TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-			memset(&xiaomi_touch_interfaces, 0x00, sizeof(struct xiaomi_touch_interface));
-			xiaomi_touch_interfaces.getModeValue = gtp_get_mode_value;
-			xiaomi_touch_interfaces.setModeValue = gtp_set_cur_value;
-			xiaomi_touch_interfaces.resetMode = gtp_reset_mode;
-			xiaomi_touch_interfaces.getModeAll = gtp_get_mode_all;
-			gtp_init_touchmode_data();
-			xiaomitouch_register_modedata(&xiaomi_touch_interfaces);
-#endif
-#if defined(CONFIG_WT_QGKI)
-		}
-
-	}
-#endif	
-	/* add xiaomi game mode end */
 	core_data->ts_workqueue = create_singlethread_workqueue("gtx_wq");
 	if (!core_data->ts_workqueue) {
 		ts_err("create gtx workqueue fail");
@@ -3119,12 +2827,6 @@ static int goodix_ts_probe(struct platform_device *pdev)
 	ts_info("goodix_ts_core probe success");
 
 	return 0;
-
-#if defined(CONFIG_WT_QGKI)
-err_class_create:
-	class_destroy(core_data->gtp_tp_class);
-	core_data->gtp_tp_class = NULL;
-#endif
 
 later_thread_err:
 	goodix_fw_update_uninit();
