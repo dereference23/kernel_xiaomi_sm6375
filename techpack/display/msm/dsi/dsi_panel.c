@@ -2445,8 +2445,12 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 		panel->bl_config.brightness_max_level = val;
 	}
 
+#ifdef CONFIG_WT_QGKI
+	panel->bl_config.bl_inverted_dbv = true;
+#else
 	panel->bl_config.bl_inverted_dbv = utils->read_bool(utils->data,
 		"qcom,mdss-dsi-bl-inverted-dbv");
+#endif
 
 	state = utils->get_property(utils->data, "qcom,bl-dsc-cmd-state", NULL);
 	if (!state || !strcmp(state, "dsi_hs_mode"))
