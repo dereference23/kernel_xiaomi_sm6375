@@ -71,14 +71,6 @@
 #if WT_TP_PALM_EN
 #include "wt_tp_palm.h"
 #endif
-#if defined(CONFIG_WT_QGKI)
-#define TOUCHSCREEN_XIAOMI_TOUCHFEATURE    		1
-#else
-#define TOUCHSCREEN_XIAOMI_TOUCHFEATURE    		0
-#endif
-#if TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-#include "../xiaomi/xiaomi_touch.h"
-#endif
 /*set gesture mode */
 int wt_gsx_tp_gesture_callback(bool flag);
 #define GOODIX_FLASH_CONFIG_WITH_ISP	1
@@ -121,7 +113,6 @@ int charger_notifier_chain_unregister(struct notifier_block *n);
 #define TS_RAWDATA_BUFF_MAX             3000
 #define TS_RAWDATA_RESULT_MAX           100
 
-#define GTP_GAME_CMD_ADD				0x4160
 #define GTP_GAME_CMD_ENTER				0x0E
 #define GTP_GAME_CMD_EXIT				0x0F
 
@@ -502,18 +493,7 @@ struct goodix_ts_core {
 	struct device *dev;
 	struct regulator *avdd;
 	struct regulator *iovdd;
-
-	bool gamemode_on;
-#if TOUCHSCREEN_XIAOMI_TOUCHFEATURE
-	u8 palm_sensor_switch;
-	bool palm_sensor_changed;
-	bool gamemode_enabled;
-#endif
 	struct mutex reg_lock;
-#if defined(CONFIG_WT_QGKI)	
-	struct device *gtp_touch_dev;
-	struct class *gtp_tp_class;
-#endif
 
 #ifdef CONFIG_PINCTRL
 	struct pinctrl *pinctrl;
@@ -538,8 +518,6 @@ struct goodix_ts_core {
 	 u8 gtp_game_edge;
 	 u8 gtp_game_direction;
 	 u8 gtp_game;
-
-	 bool aod_changed;
 
 	struct notifier_block ts_notifier;
 #if defined(CONFIG_WT_QGKI)	
