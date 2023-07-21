@@ -28,8 +28,6 @@
 #include "goodix_ts_core.h"
 
 #define GSX_GESTURE_CMD				0x08
-#define GSX_SINGLE_TYPE				0x04
-#define GSX_DOUBLE_TYPE				0x02
 
 #define QUERYBIT(longlong, bit) (!!(longlong[bit/8] & (1 << bit%8)))
 
@@ -37,7 +35,7 @@
 #define GSX_KEY_DATA_LEN	37
 #define GSX_KEY_DATA_LEN_YS	8
 #define GSX_GESTURE_TYPE_LEN	32
-#define KEY_GESTURE_AOD               KEY_GOTO
+
 /*
  * struct gesture_module - gesture module data
  * @registered: module register state
@@ -56,7 +54,6 @@ struct gesture_module {
 	struct goodix_ts_cmd cmd;
 };
 
-extern struct goodix_module goodix_modules;
 static int gsx_enter_gesture_mode(struct goodix_ts_device *ts_dev);
 static struct gesture_module *gsx_gesture; /*allocated in gesture init module*/
 
@@ -192,8 +189,6 @@ const struct goodix_ext_attribute gesture_attrs[] = {
 
 static int gsx_enter_gesture_mode(struct goodix_ts_device *ts_dev)
 {
-	u8 gsx_type = 0x06;
-
 	if (!ts_dev->reg.command) {
 		ts_err("command reg can not be null");
 		return -EINVAL;
@@ -202,27 +197,17 @@ static int gsx_enter_gesture_mode(struct goodix_ts_device *ts_dev)
 		gsx_gesture->cmd.cmd_reg = ts_dev->reg.command;
 		gsx_gesture->cmd.length = 5;
 		gsx_gesture->cmd.cmds[0] = GSX_GESTURE_CMD;
-		if (goodix_modules.core_data->gesture_enable)
-			gsx_type -= GSX_DOUBLE_TYPE;
-		if (goodix_modules.core_data->aod_changed)
-			gsx_type -= GSX_SINGLE_TYPE;
-		gsx_gesture->cmd.cmds[1] = gsx_type;
-		ts_info("gsx_type:%02x",gsx_type);
+		gsx_gesture->cmd.cmds[1] = 0x0;
 		gsx_gesture->cmd.cmds[2] = 0x0;
 		gsx_gesture->cmd.cmds[3] = 0x0;
-		gsx_gesture->cmd.cmds[4] = GSX_GESTURE_CMD + gsx_type;
+		gsx_gesture->cmd.cmds[4] = GSX_GESTURE_CMD;
 		gsx_gesture->cmd.initialized = 1;
 
 	} else {
 		gsx_gesture->cmd.cmd_reg = ts_dev->reg.command;
 		gsx_gesture->cmd.length = 3;
 		gsx_gesture->cmd.cmds[0] = GSX_GESTURE_CMD;
-		//if (goodix_modules.core_data->aod_changed)
-			//gsx_type |= GSX_SINGLE_TYPE;
-		if (goodix_modules.core_data->gesture_enable)
-			gsx_type |= GSX_DOUBLE_TYPE;
-		gsx_gesture->cmd.cmds[1] = gsx_type;
-		ts_info("gsx_type:%02x",gsx_type);
+		gsx_gesture->cmd.cmds[1] = 0x01;
 		gsx_gesture->cmd.cmds[2] = 0 - gsx_gesture->cmd.cmds[0] - gsx_gesture->cmd.cmds[1];
 		gsx_gesture->cmd.initialized = 1;
 	}
@@ -307,12 +292,7 @@ static int gsx_gesture_ist(struct goodix_ts_core *core_data,
 	u8 temp_data[GSX_MAX_KEY_DATA_LEN];
 	struct goodix_ts_device *ts_dev = core_data->ts_dev;
 
-	if (atomic_read(&core_data->suspended) == 0)
-		return EVT_CONTINUE;
-
-	ts_info("core_data->gesture_enable =%d", core_data->gesture_enable);
-	ts_info("core_data->aod_changed =%d", core_data->aod_changed);
-	if (!core_data->gesture_enable && !core_data->aod_changed)
+	if (!core_data->gesture_enable || atomic_read(&core_data->suspended) == 0)
 		return EVT_CONTINUE;
 
 	if (!ts_dev->reg.gesture) {
@@ -399,11 +379,10 @@ static int gsx_gesture_before_suspend(struct goodix_ts_core *core_data,
 	struct goodix_ext_module *module)
 {
 	int ret;
-	//const struct goodix_ts_hw_ops *hw_ops = core_data->ts_dev->hw_ops;
+	const struct goodix_ts_hw_ops *hw_ops = core_data->ts_dev->hw_ops;
 
-	if (!core_data->gesture_enable && !core_data->aod_changed)
+	if (!core_data->gesture_enable || !hw_ops)
 		return EVT_CONTINUE;
-
 
 	atomic_set(&core_data->suspended, 1);
 	ret = gsx_enter_gesture_mode(core_data->ts_dev);
@@ -412,7 +391,7 @@ static int gsx_gesture_before_suspend(struct goodix_ts_core *core_data,
 	else
 		ts_info("Set IC in gesture mode");
 
-	if (core_data->gesture_enable || core_data->aod_changed)
+	if (core_data->gesture_enable)
 		enable_irq_wake(core_data->irq);
 
 	return EVT_CANCEL_SUSPEND;
