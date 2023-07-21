@@ -383,7 +383,7 @@ static void aw8624_rtp_loaded(const struct firmware *cont, void *context)
 
 static int aw8624_rtp_update(struct aw8624 *aw8624)
 {
-	pr_info("%s: enter\n", __func__);
+	pr_debug("%s: enter\n", __func__);
 
 	return request_firmware_nowait(THIS_MODULE, FW_ACTION_HOTPLUG,
 				       aw8624_rtp_name[aw8624->rtp_file_num],
@@ -398,7 +398,7 @@ static void aw8624_container_update(struct aw8624 *aw8624,
 	int ret = -1;//Daniel 20211009 modify start
 	unsigned int shift = 0;
 
-	pr_info("%s: enter\n", __func__);
+	pr_debug("%s: enter\n", __func__);
 
 	mutex_lock(&aw8624->lock);
 
@@ -415,7 +415,7 @@ static void aw8624_container_update(struct aw8624 *aw8624,
 	aw8624->ram.base_addr =
 	    (unsigned int)((aw8624_cont->data[0 + shift] << 8) |
 			   (aw8624_cont->data[1 + shift]));
-	pr_info("%s: base_addr=0x%4x\n", __func__, aw8624->ram.base_addr);
+	pr_debug("%s: base_addr=0x%4x\n", __func__, aw8624->ram.base_addr);
 
 	aw8624_i2c_write(aw8624, AW8624_REG_BASE_ADDRH,
 			 aw8624_cont->data[0 + shift]);
@@ -475,7 +475,7 @@ static void aw8624_container_update(struct aw8624 *aw8624,
 
 	aw8624->ram_init = 1;//Daniel 20211009 modify end
 	mutex_unlock(&aw8624->lock);
-	pr_info("%s: exit\n", __func__);
+	pr_debug("%s: exit\n", __func__);
 }
 
 static void aw8624_ram_loaded(const struct firmware *cont, void *context)
@@ -485,7 +485,7 @@ static void aw8624_ram_loaded(const struct firmware *cont, void *context)
 	int i = 0;
 	unsigned short check_sum = 0;
 
-	pr_info("%s: enter\n", __func__);
+	pr_debug("%s: enter\n", __func__);
 
 	if (!cont) {
 		pr_err("%s: failed to read %s\n", __func__, aw8624_ram_name);
@@ -564,7 +564,7 @@ static void aw8624_ram_work_routine(struct work_struct *work)
 	struct aw8624 *aw8624 =
 	    container_of(work, struct aw8624, ram_work.work);
 
-	pr_info("%s: enter\n", __func__);
+	pr_debug("%s: enter\n", __func__);
 
 	aw8624_ram_update(aw8624);
 
@@ -690,7 +690,7 @@ aw8624_haptic_play_mode(struct aw8624 *aw8624, unsigned char play_mode)
 
 static int aw8624_haptic_play_go(struct aw8624 *aw8624, bool flag)
 {
-	pr_info("%s: enter\n", __func__);
+	pr_debug("%s: enter\n", __func__);
 
 	if (flag == true) {
 		aw8624_i2c_write_bits(aw8624, AW8624_REG_GO,
@@ -791,7 +791,7 @@ static int aw8624_haptic_set_gain(struct aw8624 *aw8624, unsigned char gain)
 			comp_gain = 128 * AW8624_VBAT_REFER / AW8624_VBAT_MIN;
 			pr_debug("%s: comp gain limit is %d ", comp_gain);
 		}
-		pr_info("%s: enable vbat comp, level = %x comp level = %x", __func__,
+		pr_debug("%s: enable vbat comp, level = %x comp level = %x", __func__,
 			   gain, comp_gain);
 		aw8624_i2c_write(aw8624, AW8624_REG_DATDBG, comp_gain);
 	} else {
@@ -1259,7 +1259,7 @@ static int16_t aw8624_haptic_effect_strength(struct aw8624 *aw8624)
 		aw8624->level = 0x1E;	/*30 */
 #endif
 
-	pr_info("%s: aw8624->level =0x%x\n", __func__, aw8624->level);
+	pr_debug("%s: aw8624->level =0x%x\n", __func__, aw8624->level);
 	return 0;
 }
 
@@ -2398,7 +2398,7 @@ static void aw8624_vibrator_work_routine(struct work_struct *work)
 	}//Daniel 20210526 modify end
 
 	pr_debug("%s: enter\n", __func__);
-	pr_info("%s: state=%d activate_mode = %d duration = %d\n", __func__,
+	pr_debug("%s: state=%d activate_mode = %d duration = %d\n", __func__,
 		aw8624->state, aw8624->activate_mode, aw8624->duration);
 
 	mutex_lock(&aw8624->lock);
@@ -2520,7 +2520,7 @@ static irqreturn_t aw8624_irq(int irq, void *data)
 		pr_err("%s: chip over temperature int error\n", __func__);
 	}
 	if (reg_val & AW8624_BIT_SYSINT_DONEI) {
-		pr_info("%s chip playback done\n", __func__);
+		pr_debug("%s chip playback done\n", __func__);
 		/* mask donei */
 		aw8624_haptic_set_ram_donei(aw8624, false);
 	}
@@ -2615,7 +2615,7 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 	struct qti_hap_effect *effect;
 	int rc = 0, tmp, i = 0, j, m;
 
-	pr_info("%s:  enter\n", __func__);
+	pr_debug("%s:  enter\n", __func__);
 	aw8624->reset_gpio = of_get_named_gpio(np, "reset-gpio", 0);
 	if (aw8624->reset_gpio < 0) {
 		dev_err(dev,
@@ -2745,7 +2745,7 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 		return -ENOMEM;
 
 	aw8624->effects_count = tmp;
-	pr_info("%s: ---%d aw8624->effects_count=%d\n", __func__, __LINE__,
+	pr_debug("%s: ---%d aw8624->effects_count=%d\n", __func__, __LINE__,
 	       aw8624->effects_count);
 	for_each_available_child_of_node(np, child_node) {
 		effect = &aw8624->predefined[i++];
@@ -2754,7 +2754,7 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 		if (rc != 0) {
 			printk("%s: Read qcom,effect-id failed\n", __func__);
 		}
-		printk("%s: effect_id: %d\n", __func__, effect->id);
+		pr_debug("%s: effect_id: %d\n", __func__, effect->id);
 
 		effect->vmax_mv = config->vmax_mv;
 		rc = of_property_read_u32(child_node, "qcom,wf-vmax-mv", &tmp);
@@ -2763,7 +2763,7 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 		else
 			effect->vmax_mv = tmp;
 
-		printk("%s: ---%d effect->vmax_mv =%d \n", __func__, __LINE__,
+		pr_debug("%s: ---%d effect->vmax_mv =%d \n", __func__, __LINE__,
 		       effect->vmax_mv);
 		rc = of_property_count_elems_of_size(child_node,
 						     "qcom,wf-pattern",
@@ -2787,7 +2787,7 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 			printk("%s: Read qcom,wf-pattern property failed !\n",
 			       __func__);
 		}
-		printk
+		pr_debug
 		    ("%s: %d  effect->pattern_length=%d  effect->pattern=%d \n",
 		     __func__, __LINE__, effect->pattern_length,
 		     (int)effect->pattern);
@@ -2800,7 +2800,7 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 			       __func__);
 		else
 			effect->play_rate_us = tmp;
-		printk("%s: ---%d effect->play_rate_us=%d \n", __func__,
+		pr_debug("%s: ---%d effect->play_rate_us=%d \n", __func__,
 		       __LINE__, effect->play_rate_us);
 
 		rc = of_property_read_u32(child_node, "qcom,wf-repeat-count",
@@ -2858,48 +2858,48 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 	}
 
 	for (j = 0; j < i; j++) {
-		printk("%s:       effect_id: %d\n", __func__,
+		pr_debug("%s:       effect_id: %d\n", __func__,
 		       aw8624->predefined[j].id);
-		printk("%s:       vmax: %d mv\n", __func__,
+		pr_debug("%s:       vmax: %d mv\n", __func__,
 		       aw8624->predefined[j].vmax_mv);
-		printk("%s:        play_rate: %d us\n", __func__,
+		pr_debug("%s:        play_rate: %d us\n", __func__,
 		       aw8624->predefined[j].play_rate_us);
 		for (m = 0; m < aw8624->predefined[j].pattern_length; m++)
-			printk("%s:     pattern[%d]: 0x%x\n", __func__, m,
+			pr_debug("%s:     pattern[%d]: 0x%x\n", __func__, m,
 			       aw8624->predefined[j].pattern[m]);
 		for (m = 0; m < aw8624->predefined[j].brake_pattern_length; m++)
-			printk("%s:     brake_pattern[%d]: 0x%x\n", __func__, m,
+			pr_debug("%s:     brake_pattern[%d]: 0x%x\n", __func__, m,
 			       aw8624->predefined[j].brake[m]);
-		printk("%s:         brake_en: %d\n", __func__,
+		pr_debug("%s:         brake_en: %d\n", __func__,
 		       aw8624->predefined[j].brake_en);
-		printk("%s:        wf_repeat_n: %d\n", __func__,
+		pr_debug("%s:        wf_repeat_n: %d\n", __func__,
 		       aw8624->predefined[j].wf_repeat_n);
-		printk("%s:         wf_s_repeat_n: %d\n", __func__,
+		pr_debug("%s:         wf_s_repeat_n: %d\n", __func__,
 		       aw8624->predefined[j].wf_s_repeat_n);
-		printk("%s:         lra_auto_res_disable: %d\n", __func__,
+		pr_debug("%s:         lra_auto_res_disable: %d\n", __func__,
 		       aw8624->predefined[j].lra_auto_res_disable);
 	}
-	printk("%s:       aw8624->effects_count: %d\n", __func__,
+	pr_debug("%s:       aw8624->effects_count: %d\n", __func__,
 	       aw8624->effects_count);
-	printk("%s:       aw8624->effect_id_boundary: %d\n", __func__,
+	pr_debug("%s:       aw8624->effect_id_boundary: %d\n", __func__,
 	       aw8624->info.effect_id_boundary);
-	printk("%s:       aw8624->effect_max: %d\n", __func__,
+	pr_debug("%s:       aw8624->effect_max: %d\n", __func__,
 	       aw8624->info.effect_max);
-	printk("%s:       aw8624->info.cont_drv_lvl: %d\n", __func__,
+	pr_debug("%s:       aw8624->info.cont_drv_lvl: %d\n", __func__,
 	       aw8624->info.cont_drv_lvl);
-	printk("%s:       aw8624->info.cont_drv_lvl_ov: %d\n", __func__,
+	pr_debug("%s:       aw8624->info.cont_drv_lvl_ov: %d\n", __func__,
 	       aw8624->info.cont_drv_lvl_ov);
-	printk("%s:       aw8624->info.gain_flag: %d\n", __func__,
+	pr_debug("%s:       aw8624->info.gain_flag: %d\n", __func__,
 	       aw8624->info.gain_flag);
 	for (i = 0; i < 3; i++)
 		for (j = 0; j < 5; j++)
-			printk
+			pr_debug
 			    ("%s:       aw8624->info.trig_config[%d][%d]: %d\n", __func__,
 			     i, j, aw8624->info.trig_config[i][j]);
 	for (i = 0; i < 175; i++)
-		printk("%s:       aw8624->info.rtp_time[%d]: %d\n", __func__,
+		pr_debug("%s:       aw8624->info.rtp_time[%d]: %d\n", __func__,
 		       i, aw8624->info.rtp_time[i]);
-	printk("%s:       aw8624->info.parameter1: 0x%x\n", __func__,
+	pr_debug("%s:       aw8624->info.parameter1: 0x%x\n", __func__,
 	       aw8624->info.parameter1);
 	return 0;
 }
@@ -2950,7 +2950,7 @@ static int aw8624_haptics_upload_effect(struct input_dev *dev,
 		usleep_range(time_us, time_us + 100);
 	}
 
-	pr_info("%s: effect->type=0x%x,FF_CONSTANT=0x%x,FF_PERIODIC=0x%x\n",
+	pr_debug("%s: effect->type=0x%x,FF_CONSTANT=0x%x,FF_PERIODIC=0x%x\n",
 		__func__, effect->type, FF_CONSTANT, FF_PERIODIC);
 	aw8624->effect_type = effect->type;
 	mutex_lock(&aw8624->lock);
@@ -3006,7 +3006,7 @@ static int aw8624_haptics_upload_effect(struct input_dev *dev,
 
 		if (aw8624->effect_id < aw8624->info.effect_id_boundary) {
 			aw8624->activate_mode = AW8624_HAPTIC_ACTIVATE_RAM_MODE;
-			pr_info
+			pr_debug
 			    ("%s: aw8624->effect_id=%d , aw8624->activate_mode = %d\n",
 			     __func__, aw8624->effect_id,
 			     aw8624->activate_mode);
@@ -3020,7 +3020,7 @@ static int aw8624_haptics_upload_effect(struct input_dev *dev,
 		}
 		if (aw8624->effect_id >= aw8624->info.effect_id_boundary) {
 			aw8624->activate_mode = AW8624_HAPTIC_ACTIVATE_RTP_MODE;
-			pr_info
+			pr_debug
 			    ("%s: aw8624->effect_id=%d , aw8624->activate_mode = %d\n",
 			     __func__, aw8624->effect_id,
 			     aw8624->activate_mode);
@@ -3059,7 +3059,7 @@ static int aw8624_haptics_playback(struct input_dev *dev, int effect_id,
 	pr_debug("%s:  %d enter\n", __func__, __LINE__);
 
 	pr_debug("%s: effect_id=%d , val = %d\n", __func__, effect_id, val);
-	pr_info("%s: aw8624->effect_id=%d , aw8624->activate_mode = %d\n",
+	pr_debug("%s: aw8624->effect_id=%d , aw8624->activate_mode = %d\n",
 		__func__, aw8624->effect_id, aw8624->activate_mode);
 
 	/*for osc calibration */
@@ -3074,17 +3074,17 @@ static int aw8624_haptics_playback(struct input_dev *dev, int effect_id,
 
 	if (aw8624->effect_type == FF_CONSTANT &&
 	    aw8624->activate_mode == AW8624_HAPTIC_ACTIVATE_RAM_LOOP_MODE) {
-		pr_info("%s: enter cont_mode \n", __func__);
+		pr_debug("%s: enter cont_mode \n", __func__);
 		//schedule_work(&aw8624->vibrator_work);
 		queue_work(aw8624->work_queue, &aw8624->vibrator_work);
 	} else if (aw8624->effect_type == FF_PERIODIC &&
 		   aw8624->activate_mode == AW8624_HAPTIC_ACTIVATE_RAM_MODE) {
-		pr_info("%s: enter  ram_mode\n", __func__);
+		pr_debug("%s: enter  ram_mode\n", __func__);
 		//schedule_work(&aw8624->vibrator_work)
 		queue_work(aw8624->work_queue, &aw8624->vibrator_work);
 	} else if (aw8624->effect_type == FF_PERIODIC &&
 		   aw8624->activate_mode == AW8624_HAPTIC_ACTIVATE_RTP_MODE) {
-		pr_info("%s: enter  rtp_mode\n", __func__);
+		pr_debug("%s: enter  rtp_mode\n", __func__);
 		//schedule_work(&aw8624->rtp_work);
 		queue_work(aw8624->work_queue, &aw8624->rtp_work);
 		//if we are in the play mode, force to exit
@@ -3127,7 +3127,7 @@ static void aw8624_haptics_set_gain_work_routine(struct work_struct *work)
 
 	if (aw8624->level < 0x1E)
 		aw8624->level = 0x1E;	/*30 */
-	pr_info("%s: set_gain queue work, new_gain = %x level = %x \n", __func__,
+	pr_debug("%s: set_gain queue work, new_gain = %x level = %x \n", __func__,
 		aw8624->new_gain, aw8624->level);
 
 	if (aw8624->ram_vbat_comp == AW8624_HAPTIC_RAM_VBAT_COMP_ENABLE
@@ -3140,7 +3140,7 @@ static void aw8624_haptics_set_gain_work_routine(struct work_struct *work)
 			comp_level = 128 * AW8624_VBAT_REFER / AW8624_VBAT_MIN;
 			pr_debug("%s: comp level limit is %d ", comp_level);
 		}
-		pr_info("%s: enable vbat comp, level = %x comp level = %x", __func__,
+		pr_debug("%s: enable vbat comp, level = %x comp level = %x", __func__,
 			   aw8624->level, comp_level);
 		aw8624_i2c_write(aw8624, AW8624_REG_DATDBG, comp_level);
 	} else {
