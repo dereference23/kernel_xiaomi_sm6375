@@ -23,7 +23,6 @@
 #define SET_RX_BLOCK			_IOW(0xE9, 0x04, long)
 #define SET_EMULATOR_TEST_POINT		_IOW(0xE9, 0x05, long)
 #define NFCC_INITIAL_CORE_RESET_NTF	_IOW(0xE9, 0x10, long)
-#define NFC_SET_NFC_INFO _IOW(0xE9, 0x0B, long)
 
 #define DEV_COUNT			1
 #define DEVICE_NAME			"pn553"
