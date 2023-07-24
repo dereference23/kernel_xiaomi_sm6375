@@ -42,7 +42,6 @@
 #include <linux/iio/consumer.h>
 #include "ln8000_reg.h"
 #include "ln8000_iio.h"
-#include <linux/hardware_info.h>
 
 static const char *ln8000_dev_name[] = {
         "ln8000-standalone",
@@ -2022,10 +2021,6 @@ static int ln8000_probe(struct i2c_client *client, const struct i2c_device_id *i
 
         determine_initial_status(info);
 
-#ifdef CONFIG_WT_QGKI
-        if (info->dev_role == LN_ROLE_STANDALONE)
-            hardwareinfo_set_prop(HARDWARE_SUB_CHARGER_MASTER, "LN8000_CHARGER_MASTER");
-#endif
         dev_info(&client->dev, "%s: End!\n", __func__);
         return 0;
 
