@@ -32,7 +32,6 @@
 #include <linux/pmic-voter.h>
 #include "step-chg-jeita.h"
 #include <linux/time.h>
-#include <linux/hardware_info.h>
 #include "bq27z561_iio.h"
 #include <linux/iio/consumer.h>
 #include <dt-bindings/iio/qti_power_supply_iio.h>
@@ -937,38 +936,18 @@ static int fg_get_chem_data(struct bq_fg_chip *bq)
 	ret = fg_mac_read_block(bq, FG_MAC_CMD_CHEM_NAME, t_buf, 4);
 	if (ret < 0) {
 		bq_dbg(PR_OEM, "failed to get MANE NAME\n");
-#ifdef CONFIG_WT_QGKI
-		hardwareinfo_set_prop(HARDWARE_BMS_GAUGE, "BQ27Z561_GAUGE");
-		hardwareinfo_set_prop(HARDWARE_BATTERY_ID, "NOT_DEFAULT_BATTERY");
-#endif
 		bq->batt_id = 0;
 		return 0;
 	}
 	bq_dbg(PR_OEM, "%s\n", t_buf);
 
 	if (strcmp(t_buf, "FLS0") == 0) {
-#ifdef CONFIG_WT_QGKI
-		hardwareinfo_set_prop(HARDWARE_BMS_GAUGE, "BQ27Z561_GAUGE");
-		hardwareinfo_set_prop(HARDWARE_BATTERY_ID, "S88006_SWD_4V45_5000mAh");
-#endif
 		bq->batt_id = 1;
 	} else if (strcmp(t_buf, "FFN0") == 0) {
-#ifdef CONFIG_WT_QGKI
-		hardwareinfo_set_prop(HARDWARE_BMS_GAUGE, "BQ27Z561_GAUGE");
-		hardwareinfo_set_prop(HARDWARE_BATTERY_ID, "S88006_NVT_4V45_5000mAh");
-#endif
 		bq->batt_id = 2;
 	} else if (strcmp(t_buf, "FFN2") == 0) {
-#ifdef CONFIG_WT_QGKI
-		hardwareinfo_set_prop(HARDWARE_BMS_GAUGE, "NVT_GAUGE");
-		hardwareinfo_set_prop(HARDWARE_BATTERY_ID, "S88006_NVT_4V45_5000mAh");
-#endif
 		bq->batt_id = 4;
 	} else {
-#ifdef CONFIG_WT_QGKI
-		hardwareinfo_set_prop(HARDWARE_BMS_GAUGE, "BQ27Z561_GAUGE");
-		hardwareinfo_set_prop(HARDWARE_BATTERY_ID, "NOT_DEFAULT_BATTERY");
-#endif
 		bq->batt_id = 0;
 	}
 	return 0;
