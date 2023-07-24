@@ -24,12 +24,6 @@
 #include <linux/jiffies.h>
 #include <linux/regulator/consumer.h>
 
-#include <linux/hardware_info.h>
-
-#define NFC_INFO_LEN 20
-
- char nfc_version[HARDWARE_MAX_ITEM_LONGTH];
-
 struct nqx_platform_data {
 	unsigned int irq_gpio;
 	unsigned int en_gpio;
@@ -1000,28 +994,6 @@ unsigned int pnnfc_ioctl_nfcc_info(struct file *filp, unsigned long arg)
 	return r;
 }
 
-static int set_nfc_info(long nfc_info_addr)
-{
-    char *tmp = NULL;
-    int ret = 0;
-
-	memset(nfc_version, 0x00, HARDWARE_MAX_ITEM_LONGTH);
-
-    tmp = memdup_user((char __user*)nfc_info_addr,NFC_INFO_LEN);
-    if (IS_ERR(tmp)) {
-			pr_err("%s: memdup_user failed\n",
-				__func__);
-			ret = PTR_ERR(tmp);
-			return ret;
-	}
-
-	memcpy(nfc_version,tmp,NFC_INFO_LEN);
-#ifdef CONFIG_WT_QGKI
-	hardwareinfo_set_prop(HARDWARE_NFC, nfc_version);
-#endif
-	kfree(tmp);
-    return ret;
-}
 static long nfc_ioctl(struct file *pfile, unsigned int cmd,
 			unsigned long arg)
 {
@@ -1058,9 +1030,6 @@ static long nfc_ioctl(struct file *pfile, unsigned int cmd,
 		break;
 	case NFCC_GET_INFO:
 		r = pnnfc_ioctl_nfcc_info(pfile, arg);
-		break;
-        case NFC_SET_NFC_INFO:
-		r = set_nfc_info(arg);
 		break;
 	default:
 		r = -ENOIOCTLCMD;
