@@ -31,7 +31,6 @@
 #include <linux/iio/consumer.h>
 #include "sc8551_reg.h"
 #include "sc8551_iio.h"
-#include <linux/hardware_info.h>
 
 typedef enum {
 	ADC_IBUS,
@@ -2385,12 +2384,6 @@ static int sc8551_charger_probe(struct i2c_client *client,
 
 	determine_initial_status(sc);
 
-#ifdef CONFIG_WT_QGKI
-	if (sc->mode == SC8551_ROLE_MASTER)
-		hardwareinfo_set_prop(HARDWARE_SUB_CHARGER_MASTER, "SC8551_CHARGER_MASTER");
-	if (sc->mode == SC8551_ROLE_SLAVE)
-		hardwareinfo_set_prop(HARDWARE_SUB_CHARGER_SLAVE, "SC8551_CHARGER_SLAVE");
-#endif
 	sc_info("sc8551 probe successfully, Part Num:%d\n!",
 				sc->part_no);
 
