@@ -25,7 +25,6 @@
 #include <linux/interrupt.h>
 #include "goodix_ts_core.h"
 #include "goodix_cfg_bin.h"
-#include <linux/hardware_info.h>
 #include <drm/drm_panel.h>
 #include <linux/notifier.h>
 #include <linux/fb.h>
@@ -83,10 +82,6 @@
 
 #define POINT_TYPE_STYLUS     		0x01
 #define POINT_TYPE_STYLUS_HOVER 	0x03
-
-#if defined(CONFIG_WT_QGKI)
-extern char Tp_name[HARDWARE_MAX_ITEM_LONGTH];
-#endif
 
 static struct drm_panel *active_goodix_panel;
 struct drm_panel *goodix_get_panel(void)
@@ -1021,17 +1016,12 @@ static int goodix_send_config(struct goodix_ts_device *dev,
 		struct goodix_ts_config *config)
 {
 	int r = 0;
-	u8 temp_buf[100] = {0};
 
 	if (!config || !config->initialized) {
 		ts_err("invalid config data");
 		return -EINVAL;
 	}
 
-	snprintf(temp_buf, 100, "qcom,mdss_dsi_k6s_38_32_0a_fhdp_dsc_vid");
-#if defined(CONFIG_WT_QGKI)
-	strncpy(Tp_name, temp_buf, strlen(temp_buf) + 1);
-#endif
 	ts_info("[MODULE]Samsung, [IC]GT9896, [FW]0x%02x\n", config->data[0]);
 	mutex_lock(&config->lock);
 
