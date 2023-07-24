@@ -30,7 +30,6 @@
 #include <sound/control.h>
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
-#include <linux/hardware_info.h>
 #include <sound/soc.h>
 #ifdef CONFIG_WT_QGKI
 extern int smartpa_type;
@@ -2195,10 +2194,6 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
 		pr_info("%s audiock fsm detect device seccess\n",__func__);
 #ifdef CONFIG_WT_QGKI
 		smartpa_type =snd_soc_set_smartpa_type("aw882xx_i2c_probe",AW88261);
-#endif
-	} else {
-#ifdef CONFIG_WT_QGKI
- 		hardwareinfo_set_prop(HARDWARE_SMARTPA, "unknown");
 #endif
 	}
 
