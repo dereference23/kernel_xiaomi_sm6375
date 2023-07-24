@@ -31,7 +31,6 @@
 #include <uapi/linux/sched/types.h>
 #include <linux/sched/clock.h>
 
-#include <linux/hardware_info.h>
 #include "inc/pd_dbg_info.h"
 #include "inc/tcpci.h"
 #include "inc/rt1711h.h"
@@ -1654,13 +1653,6 @@ static int rt1711_i2c_probe(struct i2c_client *client,
 		pr_info("%s set low pwr mode\n", __func__);
 	}
 #endif	/* CONFIG_TCPC_LOW_POWER_MODE */
-
-#ifdef CONFIG_WT_QGKI
-	if (chip->chip_id == HUSB311_DID)
-		hardwareinfo_set_prop(HARDWARE_USB_PD, "HUSB311");
-	else
-		hardwareinfo_set_prop(HARDWARE_USB_PD, "RT1715H");
-#endif
 
 	tcpc_schedule_init_work(chip->tcpc);
 	pr_info("%s probe OK!\n", __func__);
