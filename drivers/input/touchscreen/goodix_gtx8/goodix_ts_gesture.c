@@ -142,10 +142,8 @@ static ssize_t gsx_gesture_enable_store(struct goodix_ext_module *module,
 
 	if (tmp == 1) {
 		cd->gesture_enable = 1;
-		wt_gsx_tp_gesture_callback(true);
 	} else if (tmp == 0) {
 		cd->gesture_enable = 0;
-		wt_gsx_tp_gesture_callback(false);
 	} else {
 		ts_err("Parameter error!");
 		return -EINVAL;
