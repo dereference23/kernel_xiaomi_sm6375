@@ -208,7 +208,6 @@ struct fp_dev_touch_info {
 #define SIFP_IOC_PWDN         _IOW(SIFP_IOC_MAGIC, 28, u8)
 #define SIFP_IOC_PROC_NODE    _IOW(SIFP_IOC_MAGIC, 29, char[PROC_VND_ID_LEN])
 #define SIFP_IOC_SET_FEATURE  _IOW(SIFP_IOC_MAGIC, 30, u8)
-#define SIFP_IOC_SET_FINGERDOWN  _IOW(SIFP_IOC_MAGIC, 6, u8)
 
 #define FEATURE_FLASH_CS      0x01
 
@@ -290,18 +289,6 @@ struct fp_dev_touch_info {
   #define PKG_SIZE 4
   #define TANAME ""
 #endif /* BSP_SIL_PLAT_XXX */
-
-#ifdef BSP_SIL_QCOM_SPECIAL
-  #define SIL_EVENT_BLANK         MSM_DRM_EARLY_EVENT_BLANK
-  #define SIL_EVENT_UNBLANK       MSM_DRM_BLANK_UNBLANK
-  #define SIL_EVENT_POWERDOWN     MSM_DRM_BLANK_POWERDOWN
-  #define SIL_REGISTER_CLIENT(a)  do{ msm_drm_register_client(a); }while(0)
-#else
-  #define SIL_EVENT_BLANK         FB_EVENT_BLANK
-  #define SIL_EVENT_UNBLANK       FB_BLANK_UNBLANK
-  #define SIL_EVENT_POWERDOWN     FB_BLANK_POWERDOWN
-  #define SIL_REGISTER_CLIENT(a)  do{ fb_register_client(a); }while(0)
-#endif
 
 /* -------------------------------------------------------------------- */
 /*                            debug settings                            */
