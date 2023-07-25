@@ -86,18 +86,9 @@
 #include <linux/fb.h>
 #endif
 
-#if defined(CONFIG_DRM)
-#if defined(CONFIG_DRM_PANEL)
-#include <drm/drm_panel.h>
-#else
-#include <linux/msm_drm_notify.h>
-#endif
-#endif
-
 #if defined(CONFIG_HAS_EARLYSUSPEND)
 #include <linux/earlysuspend.h>
 #endif
-#include <drm/drm_bridge.h>
 
 #include "silead_fp.h"
 
@@ -111,10 +102,6 @@
 
 #define BSP_SIL_IRQ_ASYNC  /* IRQ use asynchrous mode. */
 
-#define FP_UNLOCK_REJECTION_TIMEOUT 1500
-#if defined(CONFIG_WT_QGKI)
-extern int dsi_bridge_interface_enable(int timeout);
-#endif
 #ifndef BSP_SIL_NETLINK
 struct silfp_msg_list {
     unsigned char msg;
@@ -145,7 +132,6 @@ struct silfp_data {
     s32    power_is_off;
     int    rst_port;
     struct work_struct  work;
-    struct work_struct  work_wake;
     struct completion done;
     struct wake_lock wakelock;
     struct wake_lock wakelock_hal;
@@ -272,11 +258,6 @@ static int silfp_set_feature(struct silfp_data *fp_dev, u8 feature);
 static
 #endif
 fp_debug_level_t sil_debug_level = DBG_LOG;
-
-#if defined(CONFIG_WT_QGKI)
-static unsigned char fp_down;
-static struct drm_panel *silfp_active_panel = NULL;
-#endif
 
 #include PLAT_H
 
@@ -533,64 +514,7 @@ static void silfp_late_resume(struct early_suspend *es)
     fp_dev->scr_off = 0;
     silfp_netlink_send(fp_dev, SIFP_NETLINK_SCR_ON);
 }
-#else
-
-#if defined(CONFIG_WT_QGKI)
-static int silfp_fb_callback(struct notifier_block *notif,
-                             unsigned long event, void *data)
-{
-    struct silfp_data *fp_dev = container_of(notif, struct silfp_data, notif);
-    //struct fb_event *evdata = data;
-    struct drm_panel_notifier *evdata = (struct drm_panel_notifier *)data;
-    unsigned int blank;
-    int retval = 0;
-
-    LOG_MSG_DEBUG(ERR_LOG, "silfp_fb_callback enter\n");
-    if (!evdata) {
-        LOG_MSG_DEBUG(ERR_LOG, "evdata is null");
-        return 0;
-    }
-
-    /* If we aren't interested in this event, skip it immediately ... */
-    if (event != DRM_PANEL_EVENT_BLANK /* FB_EARLY_EVENT_BLANK */) 
-	{
-		LOG_MSG_DEBUG(ERR_LOG, "event  is not DRM_PANEL_EVENT_BLANK.\n");
-		return 0;
-	}
-
-    blank = *(int *)evdata->data;
-
-    LOG_MSG_DEBUG(INFO_LOG, "[%s] enter, blank=0x%x\n", __func__, blank);
-
-    switch (blank) {
-    case DRM_PANEL_BLANK_UNBLANK:
-        LOG_MSG_DEBUG(INFO_LOG, "[%s] LCD ON\n", __func__);
-        fp_dev->scr_off = 0;
-        silfp_netlink_send(fp_dev, SIFP_NETLINK_SCR_ON);
-        break;
-
-    case DRM_PANEL_BLANK_POWERDOWN:
-        LOG_MSG_DEBUG(INFO_LOG, "[%s] LCD OFF\n", __func__);
-        fp_dev->scr_off = 1;
-        silfp_netlink_send(fp_dev, SIFP_NETLINK_SCR_OFF);
-        break;
-
-    default:
-        LOG_MSG_DEBUG(INFO_LOG, "[%s] Unknown notifier\n", __func__);
-        break;
-    }
-    return retval;
-}
-#endif
 #endif /* CONFIG_HAS_EARLYSUSPEND */
-#if defined(CONFIG_WT_QGKI)
-static void notification_work(struct work_struct *work)
-{
-   LOG_MSG_DEBUG(ERR_LOG, "[%s] silead unblank\n", __func__);
-   //resume
-   dsi_bridge_interface_enable(FP_UNLOCK_REJECTION_TIMEOUT);
-}
-#endif
 /* -------------------------------------------------------------------- */
 /*                            IRQ related functions                     */
 /* -------------------------------------------------------------------- */
@@ -661,13 +585,6 @@ static irqreturn_t silfp_irq_handler(int irq, void *dev_id)
     } else {
         LOG_MSG_DEBUG(INFO_LOG, "[%s] irq ignore\n", __func__);
     }
-#if defined(CONFIG_WT_QGKI)
-//    LOG_MSG_DEBUG(ERR_LOG,"fp_down:%d,fp_dev->scr_off:%d\n",fp_down,fp_dev->scr_off);
-    if (fp_down && fp_dev->scr_off == 1) {
-           fp_down = false;
-		   schedule_work(&fp_dev->work_wake);
-    	}
-#endif
     return IRQ_HANDLED;
 }
 
@@ -951,68 +868,14 @@ static int silfp_input_reinit(struct silfp_data *fp_dev)
     }
     return silfp_input_init(fp_dev);
 }
-#if defined(CONFIG_WT_QGKI)
-static int silfp_drm_check_dt(struct device_node *np)
-{
-    int i = 0;
-    int count = 0;
-    struct device_node *node = NULL;
-    struct drm_panel *panel = NULL;
-
-    count = of_count_phandle_with_args(np, "panel", NULL);
-    if (count <= 0) {
-        LOG_MSG_DEBUG(ERR_LOG, "find drm_panel count(%d) fail", count);
-        return -ENODEV;
-    }
-
-    for (i = 0; i < count; i++) {
-        node = of_parse_phandle(np, "panel", i);
-        panel = of_drm_find_panel(node);
-        of_node_put(node);
-        if (!IS_ERR(panel)) {
-            LOG_MSG_DEBUG(INFO_LOG, "find drm_panel successfully");
-            silfp_active_panel = panel;
-            return 0;
-        }
-    }
-
-    LOG_MSG_DEBUG(ERR_LOG, "no find drm_panel");
-
-    return -EPROBE_DEFER;
-}
-#endif
-/*
-static int silead_init_drm_notifier(struct silfp_data *fp_dev)
-{
-    int ret = 0;
-    ret = silfp_drm_check_dt(fp_dev->spi->dev.of_node);
-    LOG_MSG_DEBUG(INFO_LOG, "[%s] dts_node name %s\n",__func__,fp_dev->spi->dev.of_node->name);
-    if (ret) {
-        LOG_MSG_DEBUG(ERR_LOG, "parse drm-panel fail");
-    }
-    if (silfp_active_panel) {
-        LOG_MSG_DEBUG(INFO_LOG, "[%s] drm register\n", __func__);
-        ret = drm_panel_notifier_register(silfp_active_panel, &fp_dev->notif);
-        if (ret)
-            LOG_MSG_DEBUG(ERR_LOG, "[DRM]drm_panel_notifier_register fail: %d\n", ret);
-    }
-
-    return ret;
-}*/
 
 static int silfp_init(struct silfp_data *fp_dev)
 {
     int status = 0;
-#if defined(CONFIG_WT_QGKI)
-    int ret = 0;
-#endif
     LOG_MSG_DEBUG(INFO_LOG, "[%s] enter\n", __func__);
     init_completion(&fp_dev->done);
     spin_lock_init(&fp_dev->irq_lock);
     INIT_WORK(&fp_dev->work, silfp_work_func);
-#if defined(CONFIG_WT_QGKI)
-    INIT_WORK(&fp_dev->work_wake, notification_work);
-#endif
     /* netlink interface init */
     status = silfp_netlink_init(fp_dev);
     if (status == -1) {
@@ -1025,29 +888,6 @@ static int silfp_init(struct silfp_data *fp_dev)
     fp_dev->es.suspend = silfp_early_suspend;
     fp_dev->es.resume = silfp_late_resume;
     register_early_suspend(&fp_dev->es);
-#else
-
-#if defined(CONFIG_WT_QGKI)
-    /* register screen on/off callback */
-    fp_dev->notif.notifier_call = silfp_fb_callback;
-    //SIL_REGISTER_CLIENT(&fp_dev->notif);
-     ret = silfp_drm_check_dt(fp_dev->spi->dev.of_node);
-    LOG_MSG_DEBUG(INFO_LOG, "[%s] dts_node name %s\n",__func__,fp_dev->spi->dev.of_node->name);
-    if (ret) {
-        LOG_MSG_DEBUG(ERR_LOG, "parse drm-panel fail");
-        }
-	
-     if (silfp_active_panel) {
-        LOG_MSG_DEBUG(INFO_LOG, "[%s] drm register\n", __func__);
-        ret = drm_panel_notifier_register(silfp_active_panel, &fp_dev->notif);
-        if (ret)
-            LOG_MSG_DEBUG(ERR_LOG, "[DRM]drm_panel_notifier_register fail: %d\n", ret);
-    }
-    //status = silead_init_drm_notifier(fp_dev);
-	if (status) {
-		LOG_MSG_DEBUG(ERR_LOG, "Init drm notifier failed %d\n", status);
-	}
-#endif    
 #endif /* CONFIG_HAS_EARLYSUSPEND */
 
     atomic_set(&fp_dev->spionoff_count,0);
@@ -1102,11 +942,6 @@ static void silfp_exit(struct silfp_data *fp_dev)
     if (fp_dev->es.suspend) {
         unregister_early_suspend(&fp_dev->es);
     }
-#else
-#if defined(CONFIG_WT_QGKI)
-//    fb_unregister_client(&fp_dev->notif);
-drm_panel_notifier_unregister(silfp_active_panel, &fp_dev->notif);
-#endif
 #endif /* CONFIG_HAS_EARLYSUSPEND */
 
     //silfp_set_spi(fp_dev, false); /* release SPI resources */
@@ -1183,14 +1018,6 @@ silfp_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
         g_fp_dev = NULL;
         silfp_resource_deinit(fp_dev);
         break;
-#if defined(CONFIG_WT_QGKI)
-    case SIFP_IOC_SET_FINGERDOWN:
-		if (copy_from_user(&fp_down, (void __user *)arg, sizeof(char))) {
-            LOG_MSG_DEBUG(ERR_LOG, "[%s] copy key fail?\n",__func__);
-            retval = -EFAULT;
-        } 
-        break;
-#endif
     case SIFP_IOC_RESET:
         delay = RESET_TIME;
         LOG_MSG_DEBUG(INFO_LOG, "[%s] chip reset\n", __func__);
