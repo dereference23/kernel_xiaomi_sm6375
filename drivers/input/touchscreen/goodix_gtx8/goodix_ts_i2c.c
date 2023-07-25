@@ -25,7 +25,6 @@
 #include <linux/interrupt.h>
 #include "goodix_ts_core.h"
 #include "goodix_cfg_bin.h"
-#include <drm/drm_panel.h>
 #include <linux/notifier.h>
 #include <linux/fb.h>
 
@@ -83,13 +82,6 @@
 #define POINT_TYPE_STYLUS     		0x01
 #define POINT_TYPE_STYLUS_HOVER 	0x03
 
-static struct drm_panel *active_goodix_panel;
-struct drm_panel *goodix_get_panel(void)
-{
-	return active_goodix_panel;
-}
-EXPORT_SYMBOL(goodix_get_panel);
-
 enum TS_SEND_CFG_REPLY {
 	TS_CFG_REPLY_PKGS_ERR   = 0x01,
 	TS_CFG_REPLY_CHKSUM_ERR = 0x02,
@@ -134,64 +126,6 @@ static int goodix_parse_dt_resolution(struct device_node *node,
 
 	return 0;
 }
-
-/*****************************************************************************
-* TP Driver
-*****************************************************************************/
-#if defined(CONFIG_DRM)
-static int goodix_tcm_check_dt(struct device_node *np)
-{
-	int i;
-	int count;
-	struct device_node *node;
-	struct drm_panel *panel;
-
-	count = of_count_phandle_with_args(np, "panel", NULL);
-	if (count <= 0)
-		return 0;
-
-	for (i = 0; i < count; i++) {
-		node = of_parse_phandle(np, "panel", i);
-		panel = of_drm_find_panel(node);
-		of_node_put(node);
-		if (!IS_ERR(panel)) {
-			active_goodix_panel = panel;
-			return 0;
-		}
-	}
-
-	return PTR_ERR(panel);
-}
-
-static int goodix_tcm_check_default_tp(struct device_node *dt, const char *prop)
-{
-	const char *active_tp;
-	const char *compatible;
-	char *start;
-	int ret;
-
-	ret = of_property_read_string(dt->parent, prop, &active_tp);
-	if (ret) {
-		pr_err(" %s:fail to read %s %d\n", __func__, prop, ret);
-		return -ENODEV;
-	}
-
-	ret = of_property_read_string(dt, "compatible", &compatible);
-	if (ret < 0) {
-		pr_err(" %s:fail to read %s %d\n", __func__, "compatible", ret);
-		return -ENODEV;
-	}
-
-	start = strnstr(active_tp, compatible, strlen(active_tp));
-	if (start == NULL) {
-		pr_err(" %s:no match compatible, %s, %s\n",
-			__func__, compatible, active_tp);
-		ret = -ENODEV;
-	}
-
-	return ret;
-}
-#endif
 
 /**
  * goodix_parse_dt - parse board data from dt
@@ -1445,14 +1379,6 @@ static void goodix_parse_finger_ys(struct goodix_ts_device *dev,
 		coor_data += BYTES_PER_COORD;
 	}
 
-	/* palm flag  */
-	if (buf[2] & (0x01 << 4)) {
-		touch_data->palm_flag = 1;
-	}
-	else {
-		touch_data->palm_flag = 0;
-	}
-
 	/* process finger release */
 	for (i = 0; i < GOODIX_MAX_TOUCH; i++) {
 		if (cur_finger_map & (1 << i))
@@ -1815,28 +1741,9 @@ static int goodix_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *dev_id)
 {
 	struct goodix_ts_device *ts_device = NULL;
-#if defined(CONFIG_DRM)
-	struct device_node *dt = client->dev.of_node;
-#endif
 	int r = 0;
-	int retval;
 
 	ts_info("goodix_i2c_probe IN");
-
-#if defined(CONFIG_DRM)
-	retval = goodix_tcm_check_dt(dt);
-	if (retval == -EPROBE_DEFER)
-		return retval;
-
-	if (retval) {
-		if (!goodix_tcm_check_default_tp(dt, "qcom,i2c-touch-active"))
-			retval = -EPROBE_DEFER;
-		else
-			retval = -ENODEV;
-
-		return retval;
-	}
-#endif
 
 	r = i2c_check_functionality(client->adapter,
 		I2C_FUNC_I2C);
