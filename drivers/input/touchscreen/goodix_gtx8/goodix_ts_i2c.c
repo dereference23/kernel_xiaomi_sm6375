@@ -1445,14 +1445,6 @@ static void goodix_parse_finger_ys(struct goodix_ts_device *dev,
 		coor_data += BYTES_PER_COORD;
 	}
 
-	/* palm flag  */
-	if (buf[2] & (0x01 << 4)) {
-		touch_data->palm_flag = 1;
-	}
-	else {
-		touch_data->palm_flag = 0;
-	}
-
 	/* process finger release */
 	for (i = 0; i < GOODIX_MAX_TOUCH; i++) {
 		if (cur_finger_map & (1 << i))
