@@ -89,15 +89,6 @@ int charger_notifier_chain_unregister(struct notifier_block *n);
 #define GOODIX_MAX_TP_KEY  4
 #define GOODIX_MAX_PEN_KEY 2
 
-#define TS_RAWDATA_BUFF_MAX             3000
-#define TS_RAWDATA_RESULT_MAX           100
-
-struct ts_rawdata_info{
-	int used_size; //fill in rawdata size
-	u16 buff[TS_RAWDATA_BUFF_MAX];
-	char result[TS_RAWDATA_RESULT_MAX];
-};
-
 /*
  * struct goodix_module - external modules container
  * @head: external modules list
@@ -799,9 +790,6 @@ void goodix_gsx_gesture_exit(void);
 int goodix_do_fw_update(int mode);
 extern int sync_read_rawdata( unsigned int reg,
 		unsigned char *data, unsigned int len);
-extern int gtx8_get_rawdata(void *tsdev, struct ts_rawdata_info *info);
-extern void set_test_flag(int flag);
-extern int gtx8_dump_data(void *tsdev, char *buf, int *buf_size);
 int goodix_get_cfg_value(struct goodix_ts_core *core_data,
 			u8 *config, u8 *buf, u8 len, u8 sub_bag_num, u8 offset);
 struct drm_panel *goodix_get_panel(void);
