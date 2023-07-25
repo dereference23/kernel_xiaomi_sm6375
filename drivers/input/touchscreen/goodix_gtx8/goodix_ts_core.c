@@ -57,10 +57,6 @@ EXPORT_SYMBOL(goodix_touch_proc_dir);
 #define CORE_MODULE_PROB_SUCCESS 1
 #define CORE_MODULE_PROB_FAILED -1
 #define CORE_MODULE_REMOVED     -2
-
-#define SELF_TEST_NG	0
-#define SELF_TEST_OK	1
-#define MAX_TEST_ITEMS	10
 int core_module_prob_sate = CORE_MODULE_UNPROBED;
 
 #define WAKEUP_OFF 4
@@ -671,55 +667,6 @@ static ssize_t goodix_ts_irq_info_store(struct device *dev,
 	return count;
 }
 
-/* open short test */
-static ssize_t goodix_ts_tp_test_show(struct device *dev,
-		struct device_attribute *attr,
-		char *buf)
-{
-	int ret = 0;
-	struct ts_rawdata_info *info;
-
-	ts_info("test start!");
-	info  = kzalloc(sizeof(struct ts_rawdata_info), GFP_KERNEL);
-	if (!info) {
-		ts_err("Failed to alloc rawdata info memory\n");
-		 return -ENOMEM;
-	}
-	ret = gtx8_get_rawdata(dev,info);
-	if (ret){
-		ts_err("test error!");
-		ret = 0;
-	}
-
-	ret = snprintf(buf, PAGE_SIZE,
-			"resultInfo:%s",info->result);
-	if (ret < 0){
-		ts_err("print result info error!\n");
-		ret =  -EINVAL;
-		goto TEST_END;
-	}
-
-TEST_END:
-	kfree(info);
-	info = NULL;
-	return ret;
-
-}
-
-static ssize_t goodix_ts_tp_test_store(struct device *dev,
-					struct device_attribute *attr,
-					const char *buf, size_t count)
-{
-	int en = 0;
-
-	if (sscanf(buf, "%d", &en) != 1)
-		return -EINVAL;
-	set_test_flag(en);
-	ts_info("save result in csv file:%d(0:disable,1:enable)!",en);
-
-	return count;
-}
-
 /*reg read/write */
 static u16 rw_addr;
 static u32 rw_len;
@@ -856,8 +803,6 @@ static DEVICE_ATTR(send_cfg, S_IWUSR | S_IWGRP, NULL, goodix_ts_send_cfg_store);
 static DEVICE_ATTR(read_cfg, S_IRUGO, goodix_ts_read_cfg_show, NULL);
 static DEVICE_ATTR(irq_info, S_IRUGO | S_IWUSR | S_IWGRP,
 		   goodix_ts_irq_info_show, goodix_ts_irq_info_store);
-static DEVICE_ATTR(tp_test, S_IRUGO | S_IWUSR | S_IWGRP, goodix_ts_tp_test_show,
-		goodix_ts_tp_test_store);
 static DEVICE_ATTR(reg_rw, S_IRUGO | S_IWUSR | S_IWGRP,
 		   goodix_ts_reg_rw_show, goodix_ts_reg_rw_store);
 
@@ -869,7 +814,6 @@ static struct attribute *sysfs_attrs[] = {
 	&dev_attr_send_cfg.attr,
 	&dev_attr_read_cfg.attr,
 	&dev_attr_irq_info.attr,
-	&dev_attr_tp_test.attr,
 	&dev_attr_reg_rw.attr,
 	NULL,
 };
@@ -1034,55 +978,7 @@ static const struct file_operations goodix_fw_version_info_ops = {
 };
 
 #define TOUCH_PROC_DIR      "touchscreen"
-/*
- * open-short test implementation
- */
-#define TOUCH_OS_TEST    "ctp_openshort_test"
-//#define RESULT_PATH "/data/anr/open_short_result.txt"
-static ssize_t gtp_selftest_read(struct file *file, char __user *buf,
-			size_t count, loff_t *pos)
-{
-	struct goodix_ts_core *cd = PDE_DATA(file_inode(file));
-	struct device *dev = &cd->pdev->dev;
-	struct ts_rawdata_info *info;
-	char temp[32] = "0P-1P-2P-3P-5P";
-	int ret;
 
-	char temp_buf[256] = {0};
-
-	if (*pos != 0)
-		return 0;
-
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info) {
-		ts_err("alloc memory failed");
-		ret = SELF_TEST_NG;
-		goto exit;
-	}
-
-	ret = gtx8_get_rawdata(dev, info);
-	if (ret){
-		ts_err("test error!");
-		ret = SELF_TEST_NG;
-	} else if (strncmp(temp, info->result, 14) == 0){
-		ret = SELF_TEST_OK;
-	} else {
-		ret = SELF_TEST_NG;
-	}
-
-exit:
-	kfree(info);
-	info = NULL;
-	snprintf(temp_buf, 256, "result=%d\n", ret);
-
-	return simple_read_from_buffer(buf, count, pos, temp_buf, strlen(temp_buf));
-}
-
-static const struct file_operations gtp_selftest_ops = {
-	.read = gtp_selftest_read,
-	.open  = simple_open,
-	.owner = THIS_MODULE,
-};
 static ssize_t gtp_gesture_read(struct file *file, char __user *buf,
 			size_t count, loff_t *pos)
 {
@@ -1126,54 +1022,12 @@ static const struct file_operations gtp_gesture_ops = {
 	.open  = simple_open,
 	.owner = THIS_MODULE,
 };
-static ssize_t goodix_data_dump_read(struct file *file, char __user *buf,
-				size_t count, loff_t *pos)
-{
-	struct goodix_ts_core *cd = PDE_DATA(file_inode(file));
-	struct device *dev = &cd->pdev->dev;
-	char *v_buf = NULL;
-	int ret = 0;
-	int cnt = 0;
-
-	if (*pos != 0 || !cd)
-		return 0;
-
-	v_buf = vmalloc(PAGE_SIZE * sizeof(short));
-	if (v_buf == NULL) {
-		ts_err("get memory to save raw data failed!");
-		return 0;
-	}
-	memset(v_buf, 0, PAGE_SIZE * sizeof(short));
-
-	ts_info("start get rawdata!");
-	gtx8_dump_data(dev, v_buf, &cnt);
-
-	ret = copy_to_user(buf, v_buf, cnt);
-	*pos += cnt;
-	if (v_buf) {
-		vfree(v_buf);
-		v_buf = NULL;
-	}
-	ts_info("get rawdata test finish!");
-	if (ret != 0)
-		return 0;
-	else
-		return cnt;
-
-	return ret;
-}
-
-static const struct file_operations goodix_rawdata_info_ops = {
-	.read = goodix_data_dump_read,
-};
 
 static int goodix_ts_procfs_init(struct goodix_ts_core *core_data)
 {
 	goodix_touch_proc_dir = proc_mkdir(TOUCH_PROC_DIR, NULL);
-	proc_create_data("tp_data_dump", 0777, NULL, &goodix_rawdata_info_ops, core_data);
 	proc_create_data(TOUCH_OS_LOCKDOWN, 0777, goodix_touch_proc_dir, &goodix_lockdown_info_ops, core_data);
 	proc_create_data("tp_info", 0777, NULL, &goodix_fw_version_info_ops, core_data);
-	proc_create_data(TOUCH_OS_TEST , 0777, goodix_touch_proc_dir, &gtp_selftest_ops, core_data);
 	proc_create_data("tp_gesture", 0777, NULL, &gtp_gesture_ops, core_data);
 	return 0;
 }
