@@ -7,4 +7,4 @@ obj-$(CONFIG_TOUCHSCREEN_GOODIX_GTX8_UPDATE)	+= goodix_gtx8_update.o
 obj-$(CONFIG_TOUCHSCREEN_GOODIX_GTX8_GESTURE)	+= goodix_ts_gesture.o
 obj-$(CONFIG_TOUCHSCREEN_GOODIX_GTX8_TOOLS)	+= goodix_ts_tools.o
 
-goodix_core-y := goodix_ts_core.o goodix_cfg_bin.o goodix_ts_test.o wt_tp_palm.o wt_tp_grip_area.o
+goodix_core-y := goodix_ts_core.o goodix_cfg_bin.o goodix_ts_test.o

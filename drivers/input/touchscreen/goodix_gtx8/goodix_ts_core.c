@@ -39,8 +39,6 @@
 #define PINCTRL_STATE_ACTIVE    "pmx_ts_active"
 #define PINCTRL_STATE_SUSPEND   "pmx_ts_suspend"
 #define PINCTRL_STATE_RELEASE	"pmx_ts_release"
-#define TP_ENTER_SLEEP_CMD	"poor-en"
-#define TP_EXIT_SLEEP_CMD	"poor-off"
 
 static int goodix_ts_remove(struct platform_device *pdev);
 static int goodix_ts_suspend(struct goodix_ts_core *core_data);
@@ -65,38 +63,28 @@ EXPORT_SYMBOL(goodix_touch_proc_dir);
 #define MAX_TEST_ITEMS	10
 int core_module_prob_sate = CORE_MODULE_UNPROBED;
 
+#define WAKEUP_OFF 4
+#define WAKEUP_ON 5
+int gsx_gesture_switch(struct input_dev *dev, unsigned int type, unsigned int code, int value)
+{
+	struct goodix_ts_core *cd = goodix_modules.core_data;
+
+	ts_info("Enter. type = %u, code = %u, value = %d", type, code, value);
+	if (type == EV_SYN && code == SYN_CONFIG) {
+		if (value == WAKEUP_OFF)
+			cd->gesture_enable = 0;
+		else if (value == WAKEUP_ON)
+			cd->gesture_enable = 1;
+	}
+	ts_info("Exit");
+	return 0;
+}
+
 /**
  * __do_register_ext_module - register external module
  * to register into touch core modules structure
  * return 0 on success, otherwise return < 0
  */
-
-int wt_gsx_tp_gesture_callback(bool flag)
-{
-	struct goodix_ts_core *cd = goodix_modules.core_data;
-
-	if (flag)
-		cd->gesture_enable = 1;
-	else
-		cd->gesture_enable = 0;
-	return 0;
-
-}
-#define WAKEUP_OFF 4
-#define WAKEUP_ON 5
-int gsx_gesture_switch(struct input_dev *dev, unsigned int type, unsigned int code, int value)
-{
-	ts_info("Enter. type = %u, code = %u, value = %d", type, code, value);
-	if (type == EV_SYN && code == SYN_CONFIG) {
-		if (value == WAKEUP_OFF)
-			wt_gsx_tp_gesture_callback(false);
-		else if (value == WAKEUP_ON)
-			wt_gsx_tp_gesture_callback(true);
-
-	}
-	ts_info("Exit");
-	return 0;
-}
 static int __do_register_ext_module(struct goodix_ext_module *module)
 {
 	struct goodix_ext_module *ext_module, *next;
@@ -328,63 +316,6 @@ int goodix_unregister_ext_module(struct goodix_ext_module *module)
 }
 EXPORT_SYMBOL_GPL(goodix_unregister_ext_module);
 
-/**
- *	set screen global mode
- *
- *  rotation: screen rotation, -1 express default value
- *  edge: edge of inhibition, -1 express default value
- *  filter: track hand level, -1 express default value
- *  leave: leave level, -1 express default value
- *  game: game mode switch, -1 express default value
- */
-#if WT_TP_GRIP_AREA_EN
-static int goodix_set_global_mode(struct goodix_ts_core *core_data,
-		int rotation, int edge, int filter, int leave, int game)
-{
-	struct goodix_ts_device *dev = core_data->ts_dev;
-	struct goodix_ts_cmd tmp_cmd;
-	unsigned int check_sum = 0;
-	static u8 status[2];
-	int ret;
-
-	if (rotation >= 0) {
-		status[0] &= 0x3F;
-		status[0] |= (u8)rotation << 6;
-	}
-	if (edge >= 0) {
-		status[1] &= 0x3F;
-		status[1] |= (u8)edge << 6;
-	}
-	if (filter >= 0) {
-		status[0] &= 0xC7;
-		status[0] |= (u8)filter << 3;
-	}
-	if (leave >= 0) {
-		status[0] &= 0xF8;
-		status[0] |= (u8)leave;
-	}
-
-	tmp_cmd.initialized = true;
-	tmp_cmd.cmd_reg = dev->reg.command;
-	ts_info("&dev->reg.command = %d",dev->reg.command);
-	tmp_cmd.length = 5;
-	if (game >= 0)
-		tmp_cmd.cmds[0] = GTP_GAME_CMD_ENTER;
-	else
-		tmp_cmd.cmds[0] = GTP_GAME_CMD_EXIT;
-	tmp_cmd.cmds[1] = status[0];
-	tmp_cmd.cmds[2] = status[1];
-	check_sum = tmp_cmd.cmds[0] + tmp_cmd.cmds[1] + tmp_cmd.cmds[2];
-	tmp_cmd.cmds[3] = (check_sum >> 8) & 0xFF;
-	tmp_cmd.cmds[4] = check_sum & 0xFF;
-	ts_info("tmp_cmd.cmds[0] = %x,tmp_cmd.cmds[1]= %x,tmp_cmd.cmds[2] = %x,tmp_cmd.cmds[3] = %x",tmp_cmd.cmds[0],tmp_cmd.cmds[1],tmp_cmd.cmds[2],tmp_cmd.cmds[3]);
-	ret = dev->hw_ops->send_cmd(dev, &tmp_cmd);
-	if (ret < 0)
-		ts_err("failed set global mode");
-
-	return ret;
-}
-#endif
 static void goodix_ext_sysfs_release(struct kobject *kobj)
 {
 	ts_info("Kobject released!");
@@ -1048,53 +979,6 @@ static void goodix_ts_sysfs_exit(struct goodix_ts_core *core_data)
 	sysfs_remove_group(&core_data->pdev->dev.kobj, &sysfs_group);
 }
 
-static ssize_t gtp_sleep_read(struct file *file, char __user *buf,
-			size_t count, loff_t *pos)
-{
-	struct goodix_ts_core *cd = PDE_DATA(file_inode(file));
-	u8 temp_buf[64] = {0};
-
-	snprintf(temp_buf, strlen(temp_buf), "%s\n", cd->sleep_enable);
-
-	return simple_read_from_buffer(buf, count, pos, temp_buf, strlen(temp_buf));
-}
-
-static ssize_t gtp_sleep_write(struct file *file, const char __user *buf,
-				size_t count, loff_t *ppos)
-{
-	struct goodix_ts_core *cd = PDE_DATA(file_inode(file));
-	char temp_buf[64] = {0};
-
-	if (copy_from_user(temp_buf, buf, count)) {
-		ts_err("read proc input error");
-		return count;
-	}
-
-	if (strncmp(temp_buf, TP_ENTER_SLEEP_CMD, strlen(TP_ENTER_SLEEP_CMD)) == 0) {
-		cd->sleep_enable = 1;
-		goodix_ts_suspend(cd);
-		ts_info("enter sleep_mode !");
-	}
-	else if (strncmp(temp_buf, TP_EXIT_SLEEP_CMD, strlen(TP_EXIT_SLEEP_CMD)) == 0) {
-		cd->sleep_enable = 0;
-		ts_err("exit sleep_mode !");
-	}
-	else {
-		ts_err("unknown cmd !");
-	}
-
-	ts_info("sleep_mode:%s", cd->sleep_enable ? "on" : "off" );
-	return count;
-
-}
-
-static const struct file_operations gtp_sleep_ops = {
-	.read = gtp_sleep_read,
-	.write = gtp_sleep_write,
-	.open  = simple_open,
-	.owner = THIS_MODULE,
-};
-
 #define TOUCH_OS_LOCKDOWN	"lockdown_info"
 /* proc node */
 static ssize_t goodix_lockdown_info_read(struct file *file, char __user *buf,
@@ -1283,123 +1167,14 @@ static const struct file_operations goodix_rawdata_info_ops = {
 	.read = goodix_data_dump_read,
 };
 
-#if WT_TP_PALM_EN
-#define GSX_PALM_ON  0x01
-#define GSX_PALM_OFF 0x00
-#if WT_TP_GRIP_AREA_EN
-int wt_gsx_tp_get_screen_angle_callback(void)
-{
-	return -EPERM;
-}
-
-int wt_gsx_tp_set_screen_angle_callback(int angle)
-{
-	u8 val;
-	int ret = -EIO;
-
-	struct goodix_ts_core *cd = goodix_modules.core_data;
-	ts_info("set_screen_angle IN");
-	if(cd->gtp_game == 1){
-		return 0;
-
-	} else{
-
-		if (angle == 90) {
-			val = 1;
-		} else if (angle == 270) {
-			val = 2;
-		} else {
-			val = 0;
-		}
-
-		ts_info("val = %d",val);
-		//ret = fts_write_reg(FTS_SET_ANGLE, val);
-		ret = goodix_set_global_mode(cd,val,2,0,0,0);
-		if(ret < 0)
-			ts_err("write grip_area err\n");
-
-		ts_info("set_screen_angle out");
-		return ret;
-
-	}
-}
-#endif
-static int goodix_set_palm_mode(struct goodix_ts_core *core_data, bool enable)
-{
-	struct goodix_ts_device *dev = core_data->ts_dev;
-	struct goodix_ts_cmd tmp_cmd;
-	u8 palm_status = 0;
-
-	tmp_cmd.initialized = true;
-	tmp_cmd.cmd_reg = dev->reg.command;
-	tmp_cmd.length = 5;
-	tmp_cmd.cmds[0] = 0x70;
-	if (enable)
-		palm_status = GSX_PALM_ON;
-	else
-		palm_status = GSX_PALM_OFF;
-	tmp_cmd.cmds[1] = palm_status;
-	tmp_cmd.cmds[2] = 0x0;
-	tmp_cmd.cmds[3] = 0x0;
-	tmp_cmd.cmds[4] = tmp_cmd.cmds[0] + tmp_cmd.cmds[1];
-	return dev->hw_ops->send_cmd(dev, &tmp_cmd);
-}
-
-int wt_gsx_tp_palm_callback(bool en)
-{
-	struct goodix_ts_core *core_data = goodix_modules.core_data;
-	int ret;
-	u8 val;
-
-	if (core_data->init_stage < CORE_INIT_STAGE2 || atomic_read(&core_data->suspended))
-		return 0;
-
-	ts_info("set palm start,val = %d", en);
-	core_data->palm_changed = 0;
-	val = en? 0 : 1;
-	ret = goodix_set_palm_mode(core_data, val);
-	if (ret < 0) {
-		ts_err("failed set palm mode");
-#if WT_TP_PALM_EN
-		set_wt_tp_palm_status(en);
-#endif
-	}
-
-	if (!en)
-		core_data->palm_changed = 1;
-
-	return 0;
-}
-#endif
-
 static int goodix_ts_procfs_init(struct goodix_ts_core *core_data)
 {
-#if WT_TP_PALM_EN
-	int r = 0;
-#endif
 	goodix_touch_proc_dir = proc_mkdir(TOUCH_PROC_DIR, NULL);
 	proc_create_data("tp_data_dump", 0777, NULL, &goodix_rawdata_info_ops, core_data);
 	proc_create_data(TOUCH_OS_LOCKDOWN, 0777, goodix_touch_proc_dir, &goodix_lockdown_info_ops, core_data);
 	proc_create_data("tp_info", 0777, NULL, &goodix_fw_version_info_ops, core_data);
 	proc_create_data(TOUCH_OS_TEST , 0777, goodix_touch_proc_dir, &gtp_selftest_ops, core_data);
 	proc_create_data("tp_gesture", 0777, NULL, &gtp_gesture_ops, core_data);
-	proc_create_data("tp_sleep", 0777, NULL, &gtp_sleep_ops, core_data);
-#if WT_TP_PALM_EN
-	r = init_wt_tp_palm(wt_gsx_tp_palm_callback);
-	if (r < 0)
-		ts_err("init_wt_tp_palm Failed!");
-	else
-		ts_info("init_wt_tp_palm Succeeded!");
-#endif
-#if WT_TP_GRIP_AREA_EN
-	r = init_wt_tp_grip_area(wt_gsx_tp_set_screen_angle_callback, wt_gsx_tp_get_screen_angle_callback);
-	if (r < 0) {
-		ts_err("init_wt_tp_grip_area Failed!");
-		//goto err_init_wt_tp_grip_area_fail;
-	} else {
-		ts_info("init_wt_tp_grip_area Succeeded!");
-	}
-#endif
 	return 0;
 }
 #if defined(CONFIG_WT_QGKI)
@@ -1533,16 +1308,6 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 			input_report_key(dev, touch_data->keys[i].code, 0);
 	}
 	input_sync(dev);
-#if WT_TP_PALM_EN
-	/* palm event */
-	if (touch_data->palm_flag && goodix_modules.core_data->palm_changed) {
-		ts_info("palm event, destory the screen");
-		input_report_key(dev, KEY_NUMERIC_POUND, 1);
-		input_sync(dev);
-		input_report_key(dev, KEY_NUMERIC_POUND, 0);
-		input_sync(dev);
-	}
-#endif
 	mutex_unlock(&report_lock);
 }
 
@@ -1951,7 +1716,6 @@ static int goodix_ts_input_dev_config(struct goodix_ts_core *core_data)
 
 	input_set_capability(input_dev, EV_KEY, KEY_POWER);
 	input_set_capability(input_dev, EV_KEY, KEY_WAKEUP);
-	input_set_capability(input_dev, EV_KEY, KEY_NUMERIC_POUND);
 	input_set_capability(input_dev, EV_KEY, KEY_GOTO);
 
 	r = input_register_device(input_dev);
@@ -2199,12 +1963,6 @@ static int goodix_ts_suspend(struct goodix_ts_core *core_data)
 	struct goodix_ts_device *ts_dev = core_data->ts_dev;
 	int r;
 
-	mutex_lock(&core_data->work_stat);
-	if (atomic_read(&core_data->suspend_stat)) {
-		mutex_unlock(&core_data->work_stat);
-		return 0;
-	}
-
 	ts_info("Suspend start");
 
 	/*
@@ -2224,16 +1982,7 @@ static int goodix_ts_suspend(struct goodix_ts_core *core_data)
 			r = ext_module->funcs->before_suspend(core_data,
 							      ext_module);
 			if (r == EVT_CANCEL_SUSPEND) {
-				/**
-				 * var:core_data->gesture_enable
-				 * bit 0:TP_GESTURE_DBCLK
-				 * bit 1:TP_GESTURE_FOD
-				 * bit 2:TP_GESTURE_AOD
-				 */
-				atomic_set(&core_data->suspend_stat, TP_GESTURE);
 				mutex_unlock(&goodix_modules.mutex);
-				ts_info("suspend_stat:[%d], mode type:[0x%x]", atomic_read(&core_data->suspend_stat),
-					core_data->gesture_enable);
 				ts_info("Canceled by module:%s",
 					ext_module->name);
 				goto out;
@@ -2249,7 +1998,6 @@ static int goodix_ts_suspend(struct goodix_ts_core *core_data)
 	if (ts_dev && ts_dev->hw_ops->suspend)
 		ts_dev->hw_ops->suspend(ts_dev);
 	atomic_set(&core_data->suspended, 1);
-	atomic_set(&core_data->suspend_stat, TP_SLEEP);
 #ifdef CONFIG_PINCTRL
 	if (core_data->pinctrl) {
 		r = pinctrl_select_state(core_data->pinctrl,
@@ -2279,13 +2027,8 @@ static int goodix_ts_suspend(struct goodix_ts_core *core_data)
 	}
 	mutex_unlock(&goodix_modules.mutex);
 
-	if (core_data->sleep_enable == 1) {
-		goodix_ts_power_off(core_data);
-	}
-
 out:
 	goodix_ts_release_connects(core_data);
-	mutex_unlock(&core_data->work_stat);
 	ts_info("Suspend end");
 	return 0;
 }
@@ -2300,14 +2043,6 @@ static int goodix_ts_resume(struct goodix_ts_core *core_data)
 	struct goodix_ts_device *ts_dev =
 				core_data->ts_dev;
 	int r;
-
-	mutex_lock(&core_data->work_stat);
-	if (!atomic_read(&core_data->suspend_stat)) {
-		ts_info("resumed, skip");
-		goto out;
-	}
-	ts_info("Resume start");
-	goodix_ts_power_on(core_data);
 
 	mutex_lock(&goodix_modules.mutex);
 	if (!list_empty(&goodix_modules.head)) {
@@ -2341,7 +2076,6 @@ static int goodix_ts_resume(struct goodix_ts_core *core_data)
 	/* resume device */
 	if (ts_dev && ts_dev->hw_ops->resume)
 		ts_dev->hw_ops->resume(ts_dev);
-	atomic_set(&core_data->suspend_stat, TP_NO_SUSPEND);
 
 	mutex_lock(&goodix_modules.mutex);
 	if (!list_empty(&goodix_modules.head)) {
@@ -2360,7 +2094,6 @@ static int goodix_ts_resume(struct goodix_ts_core *core_data)
 			}
 		}
 	}
-	core_data->sleep_enable = 0;
 	mutex_unlock(&goodix_modules.mutex);
 
 	goodix_ts_irq_enable(core_data, true);
@@ -2378,7 +2111,6 @@ static int goodix_ts_resume(struct goodix_ts_core *core_data)
 	ts_info("try notify resume");
 	goodix_ts_blocking_notify(NOTIFY_RESUME, NULL);
 out:
-	mutex_unlock(&core_data->work_stat);
 	ts_info("Resume end");
 	return 0;
 }
@@ -2747,7 +2479,6 @@ static int goodix_ts_probe(struct platform_device *pdev)
 	core_data->pdev = pdev;
 	core_data->ts_dev = ts_device;
 	platform_set_drvdata(pdev, core_data);
-	core_data->sleep_enable = 0;
 
 	r = goodix_ts_power_init(core_data);
 	if (r < 0)
@@ -2772,8 +2503,6 @@ static int goodix_ts_probe(struct platform_device *pdev)
 	r = goodix_ts_gpio_setup(core_data);
 	if (r < 0)
 		goto gpio_err;
-
-	mutex_init(&core_data->work_stat);
 
 	/* confirm it's goodix touch dev or not */
 	r = ts_device->hw_ops->dev_confirm(ts_device);
