@@ -44,7 +44,6 @@
 #include <linux/regulator/consumer.h>
 #endif
 #if defined(CONFIG_DRM)
-#include <drm/drm_panel.h>
 //#elif defined(CONFIG_FB)
 #include <linux/notifier.h>
 #include <linux/fb.h>
@@ -52,27 +51,6 @@
 #include <linux/earlysuspend.h>
 #endif
 
-/*enable/disable 'grip area' feature*/
-#if defined(CONFIG_WT_QGKI)
-#define WT_TP_GRIP_AREA_EN                     1
-#else
-#define WT_TP_GRIP_AREA_EN                     0
-#endif
-
-#if WT_TP_GRIP_AREA_EN
-#include "wt_tp_grip_area.h"
-#endif
-/*enable/disable palm feature*/
-#if defined(CONFIG_WT_QGKI)
-#define WT_TP_PALM_EN                             1
-#else
-#define WT_TP_PALM_EN                             0
-#endif
-#if WT_TP_PALM_EN
-#include "wt_tp_palm.h"
-#endif
-/*set gesture mode */
-int wt_gsx_tp_gesture_callback(bool flag);
 #define GOODIX_FLASH_CONFIG_WITH_ISP	1
 
 #if defined(CONFIG_WT_QGKI)
@@ -112,9 +90,6 @@ int charger_notifier_chain_unregister(struct notifier_block *n);
 
 #define TS_RAWDATA_BUFF_MAX             3000
 #define TS_RAWDATA_RESULT_MAX           100
-
-#define GTP_GAME_CMD_ENTER				0x0E
-#define GTP_GAME_CMD_EXIT				0x0F
 
 struct ts_rawdata_info{
 	int used_size; //fill in rawdata size
@@ -264,13 +239,6 @@ enum ts_notify_event {
 	NOTIFY_CFG_BIN_SUCCESS,
 };
 
-/* suspend status*/
-enum tp_suspend_stat {
-	TP_NO_SUSPEND,
-	TP_GESTURE,
-	TP_SLEEP,
-};
-
 enum touch_point_status {
 	TS_NONE,
 	TS_RELEASE,
@@ -298,7 +266,6 @@ struct goodix_ts_key {
 /* touch event data */
 struct goodix_touch_data {
 	int touch_num;
-	int palm_flag;
 	struct goodix_ts_coords coords[GOODIX_MAX_TOUCH];
 	struct goodix_ts_key keys[GOODIX_MAX_TP_KEY];
 };
@@ -482,8 +449,6 @@ struct goodix_ts_core {
 	int initialized;
 	int init_stage;
 	int gesture_enable;
-	int sleep_enable;
-	int palm_changed;
 	u8 lockdown_info[GOODIX_LOCKDOWN_SIZE];
 	struct platform_device *pdev;
 	struct goodix_ts_device *ts_dev;
@@ -513,12 +478,6 @@ struct goodix_ts_core {
 	u32 drv_num;
 	u32 sen_num;
 
-	 u8 gtp_game_tole;
-	 u8 gtp_game_hold;
-	 u8 gtp_game_edge;
-	 u8 gtp_game_direction;
-	 u8 gtp_game;
-
 	struct notifier_block ts_notifier;
 #if defined(CONFIG_WT_QGKI)	
 	struct notifier_block charger_notif;
@@ -535,8 +494,6 @@ struct goodix_ts_core {
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
 	struct early_suspend early_suspend;
 #endif
-	struct mutex work_stat;
-	atomic_t suspend_stat;
 };
 
 /* external module structures */
@@ -846,7 +803,6 @@ extern void set_test_flag(int flag);
 extern int gtx8_dump_data(void *tsdev, char *buf, int *buf_size);
 int goodix_get_cfg_value(struct goodix_ts_core *core_data,
 			u8 *config, u8 *buf, u8 len, u8 sub_bag_num, u8 offset);
-struct drm_panel *goodix_get_panel(void);
 #if defined(CONFIG_WT_QGKI)
 extern void goodix_charger_in(struct goodix_ts_core *core_data);
 extern void goodix_charger_out(struct goodix_ts_core *core_data);
