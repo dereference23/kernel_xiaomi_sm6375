@@ -1148,8 +1148,8 @@ static void goodix_ts_report_finger(struct input_dev *dev,
 				 touch_data->coords[i].x);
 		input_report_abs(dev, ABS_MT_POSITION_Y,
 				 touch_data->coords[i].y);
-		//input_report_abs(dev, ABS_MT_TOUCH_MAJOR,
-				 //touch_data->coords[i].w);
+		input_report_abs(dev, ABS_MT_TOUCH_MAJOR,
+				 touch_data->coords[i].w);
 	}
 
 	/* report panel key */
