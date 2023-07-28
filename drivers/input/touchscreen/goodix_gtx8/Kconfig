@@ -25,7 +25,7 @@ config TOUCHSCREEN_GOODIX_GTX8_UPDATE
 
 config TOUCHSCREEN_GOODIX_GTX8_GESTURE
 	tristate "Goodix GTx8 gesture wakeup feature"
-	default n
+	default y
 	help
 	  Say Y here to enable support for gesture wakeup feature..
 
