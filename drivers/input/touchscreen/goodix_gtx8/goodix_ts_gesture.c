@@ -259,7 +259,7 @@ static int gsx_gesture_init(struct goodix_ts_core *core_data,
 	}
 
 	gsx_gesture->kobj_initialized = 1;
-	core_data->gesture_enable = 0;
+	core_data->gesture_enable = 1;
 
 exit_gesture_init:
 	return ret;
