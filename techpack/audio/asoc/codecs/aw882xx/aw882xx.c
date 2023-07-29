@@ -59,6 +59,10 @@ static const char *const aw882xx_spin[] = {"spin_0", "spin_90",
 					"spin_180", "spin_270"};
 #endif
 
+static enum smartpa_type smartpa_type = FS1962;
+module_param(smartpa_type, int, S_IRUSR | S_IRGRP | S_IROTH);
+MODULE_PARM_DESC(smartpa_type, "Show SmartPA type");
+
 /******************************************************
  *
  * aw882xx distinguish between codecs and components by version
@@ -2189,9 +2193,12 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
 	}
 	if (aw882xx->chip_id == 0x2113) {
 		pr_info("%s audiock fsm detect device seccess\n",__func__);
+		smartpa_type = AW88261;
 #ifdef CONFIG_WT_QGKI
 		snd_soc_set_smartpa_type(__func__, AW88261);
 #endif
+	} else {
+		smartpa_type = PA_INVALID;
 	}
 
 	/*aw pa init*/
