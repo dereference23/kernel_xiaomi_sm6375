@@ -2,6 +2,7 @@
 #include "veux-audio.dtsi"
 #include "veux-camera.dtsi"
 #include "veux-pinctrl.dtsi"
+#include "veux-qupv3.dtsi"
 
 &adsp_mem {
 	compatible = "removed-dma-pool";
