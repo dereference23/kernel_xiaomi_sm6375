@@ -1,0 +1,50 @@
+&tlmm {
+	nfc {
+		nfc_clk_req_active: nfc_clk_req_active {
+			mux {
+				pins = "gpio7";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio7";
+				drive-strength = <2>;
+				bias-pull-up;
+			};
+		};
+
+		nfc_clk_req_suspend: nfc_clk_req_suspend {
+			mux {
+				pins = "gpio7";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio7";
+				drive-strength = <2>;
+				bias-disable;
+			};
+		};
+	};
+};
+
+&nfc_int_active {
+	config {
+		/delete-property/ bias-pull-down;
+		bias-pull-up;
+	};
+};
+
+&nfc_int_suspend {
+	config {
+		/delete-property/ bias-pull-down;
+		bias-pull-up;
+	};
+};
+
+&nfc_enable_active {
+	config {
+		/delete-property/ bias-disable;
+		bias-pull-up;
+	};
+};
