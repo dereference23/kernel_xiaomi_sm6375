@@ -54,6 +54,8 @@
 			};
 		};
 	};
+
+	/delete-node/ spkr_1_sd_n;
 };
 
 &nfc_int_active {
