@@ -1,0 +1,58 @@
+&soc {
+	qupv3_se7_spi: spi@4c84000 {
+		compatible = "qcom,spi-geni";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x4c84000 0x4000>;
+		reg-names = "se_phys";
+		clock-names = "se-clk", "m-ahb", "s-ahb";
+		clocks = <&gcc GCC_QUPV3_WRAP1_S1_CLK>,
+			<&gcc GCC_QUPV3_WRAP_1_M_AHB_CLK>,
+			<&gcc GCC_QUPV3_WRAP_1_S_AHB_CLK>;
+		pinctrl-names = "default", "sleep";
+		pinctrl-0 = <&qupv3_se7_spi_active>;
+		pinctrl-1 = <&qupv3_se7_spi_sleep>;
+		interrupts = <GIC_SPI 508 IRQ_TYPE_LEVEL_HIGH>;
+		spi-max-frequency = <50000000>;
+		qcom,wrapper-core = <&qupv3_1>;
+		dmas = <&gpi_dma1 0 1 1 64 0>,
+			<&gpi_dma1 1 1 1 64 0>;
+		dma-names = "tx", "rx";
+
+		irled@0 {
+			compatible = "ir-spi-led";
+			reg = <0>;
+			spi-max-frequency = <19200000>;
+		};
+	};
+};
+
+&tlmm {
+	qupv3_se7_spi_pins: qupv3_se7_spi_pins {
+		qupv3_se7_spi_active: qupv3_se7_spi_active {
+			mux {
+				pins = "gpio27", "gpio28";
+				function = "qup11_f1";
+			};
+
+			config {
+				pins = "gpio27", "gpio28";
+				drive-strength = <6>;
+				bias-disable;
+			};
+		};
+
+		qupv3_se7_spi_sleep: qupv3_se7_spi_sleep {
+			mux {
+				pins = "gpio27", "gpio28";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio27", "gpio28";
+				drive-strength = <6>;
+				bias-disable;
+			};
+		};
+	};
+};
