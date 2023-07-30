@@ -1,0 +1,35 @@
+&adsp_mem {
+	compatible = "removed-dma-pool";
+	/delete-property/ reusable;
+	no-map;
+};
+
+&pil_adsp_mem {
+	reg = <0x0 0x86700000 0x0 0x2c00000>;
+};
+
+&pil_cdsp_mem {
+	reg = <0x0 0x89300000 0x0 0x1e00000>;
+};
+
+&pil_video_mem {
+	reg = <0x0 0x8b100000 0x0 0x500000>;
+};
+
+&pil_ipa_fw_mem {
+	reg = <0x0 0x8b600000 0x0 0x10000>;
+};
+
+&pil_ipa_gsi_mem {
+	reg = <0x0 0x8b610000 0x0 0xa000>;
+};
+
+&pil_gpu_micro_code_mem {
+	reg = <0x0 0x8b61a000 0x0 0x2000>;
+};
+
+&soc {
+	qcom,rmtfs_sharedmem@0 {
+		reg = <0x0 0x300000>;
+	};
+};
