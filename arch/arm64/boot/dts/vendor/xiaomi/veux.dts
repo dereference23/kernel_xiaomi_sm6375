@@ -1,6 +1,7 @@
 #include "../qcom/blair.dts"
 #include "veux-audio.dtsi"
 #include "veux-camera.dtsi"
+#include "veux-pinctrl.dtsi"
 
 &adsp_mem {
 	compatible = "removed-dma-pool";
