@@ -26,6 +26,34 @@
 			};
 		};
 	};
+
+	qupv3_se7_spi_pins: qupv3_se7_spi_pins {
+		qupv3_se7_spi_active: qupv3_se7_spi_active {
+			mux {
+				pins = "gpio27", "gpio28";
+				function = "qup11_f1";
+			};
+
+			config {
+				pins = "gpio27", "gpio28";
+				drive-strength = <6>;
+				bias-disable;
+			};
+		};
+
+		qupv3_se7_spi_sleep: qupv3_se7_spi_sleep {
+			mux {
+				pins = "gpio27", "gpio28";
+				function = "gpio";
+			};
+
+			config {
+				pins = "gpio27", "gpio28";
+				drive-strength = <6>;
+				bias-disable;
+			};
+		};
+	};
 };
 
 &nfc_int_active {
