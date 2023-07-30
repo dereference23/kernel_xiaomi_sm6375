@@ -1,0 +1,25 @@
+#include "holi-qupv3.dtsi"
+
+&soc {
+        qupv3_se7_spi: spi@4C84000 {
+                compatible = "qcom,spi-geni";
+                #address-cells = <1>;
+                #size-cells = <0>;
+                reg = <0x4c84000 0x4000>;
+                reg-names = "se_phys";
+                clock-names = "se-clk", "m-ahb", "s-ahb";
+                clocks = <&gcc GCC_QUPV3_WRAP1_S1_CLK>,
+                        <&gcc GCC_QUPV3_WRAP_1_M_AHB_CLK>,
+                        <&gcc GCC_QUPV3_WRAP_1_S_AHB_CLK>;
+                pinctrl-names = "default", "sleep";
+                pinctrl-0 = <&qupv3_se7_spi_active>;
+                pinctrl-1 = <&qupv3_se7_spi_sleep>;
+                interrupts = <GIC_SPI 508 IRQ_TYPE_LEVEL_HIGH>;
+		spi-max-frequency = <0x2faf080>;
+                qcom,wrapper-core = <&qupv3_1>;
+                dmas = <&gpi_dma1 0 1 1 64 0>,
+                        <&gpi_dma1 1 1 1 64 0>;
+                dma-names = "tx", "rx";
+                status = "ok";
+        };
+};
