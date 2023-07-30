@@ -16,6 +16,9 @@
 #define VALIDATE_VOLTAGE(min, max, config_val) ((config_val) && \
 	(config_val >= min) && (config_val <= max))
 
+static DEFINE_MUTEX(powernum_mutex);
+static int custom_gpio2_powernum;
+
 static struct i2c_settings_list*
 	cam_sensor_get_i2c_ptr(struct i2c_settings_array *i2c_reg_settings,
 		uint32_t size)
@@ -2148,8 +2151,14 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 		case SENSOR_CUSTOM_GPIO1:
 		case SENSOR_CUSTOM_GPIO2:
 			if (no_gpio) {
-				CAM_ERR(CAM_SENSOR, "request gpio failed");
-				goto power_up_failed;
+				if (power_setting->seq_type !=
+				    SENSOR_CUSTOM_GPIO2) {
+					CAM_ERR(CAM_SENSOR,
+						"request gpio failed");
+					goto power_up_failed;
+				}
+				CAM_INFO(CAM_SENSOR,
+					"request gpio failed, but still do power-up");
 			}
 			if (!gpio_num_info) {
 				CAM_ERR(CAM_SENSOR, "Invalid gpio_num_info");
@@ -2158,6 +2167,12 @@ int cam_sensor_core_power_up(struct cam_sensor_power_ctrl_t *ctrl,
 			CAM_DBG(CAM_SENSOR, "gpio set val %d",
 				gpio_num_info->gpio_num
 				[power_setting->seq_type]);
+
+			if (power_setting->seq_type == SENSOR_CUSTOM_GPIO2) {
+				mutex_lock(&powernum_mutex);
+				++custom_gpio2_powernum;
+				mutex_unlock(&powernum_mutex);
+			}
 
 			rc = msm_cam_sensor_handle_reg_gpio(
 				power_setting->seq_type,
@@ -2435,6 +2450,20 @@ int cam_sensor_util_power_down(struct cam_sensor_power_ctrl_t *ctrl,
 			}
 			if (!gpio_num_info->valid[pd->seq_type])
 				continue;
+
+			if (pd->seq_type == SENSOR_CUSTOM_GPIO2) {
+				mutex_lock(&powernum_mutex);
+				if (--custom_gpio2_powernum) {
+					CAM_DBG(CAM_SENSOR,
+						"custom_gpio2_powernum is %d, continue",
+						custom_gpio2_powernum);
+					mutex_unlock(&powernum_mutex);
+					continue;
+				}
+				mutex_unlock(&powernum_mutex);
+				CAM_DBG(CAM_SENSOR,
+					"custom_gpio2_powernum is 0, power down");
+			}
 
 			cam_res_mgr_gpio_set_value(
 				gpio_num_info->gpio_num
