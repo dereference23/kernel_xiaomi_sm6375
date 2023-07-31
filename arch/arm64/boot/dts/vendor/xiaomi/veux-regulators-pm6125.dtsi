@@ -1,0 +1,3 @@
+&pm6125_l13 {
+	/delete-property/ qcom,proxy-consumer-enable;
+};
