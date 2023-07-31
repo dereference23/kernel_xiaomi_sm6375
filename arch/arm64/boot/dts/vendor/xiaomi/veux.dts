@@ -6,6 +6,7 @@
 #include "veux-regulators-pm6125.dtsi"
 #include "veux-thermal-modem.dtsi"
 #include "veux-usb.dtsi"
+#include "veux-vidc.dtsi"
 
 &adsp_mem {
 	compatible = "removed-dma-pool";
