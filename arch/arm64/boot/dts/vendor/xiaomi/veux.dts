@@ -1,1 +1,7 @@
 #include "../qcom/blair-qrd-nopmi.dts"
+
+/ {
+	aliases {
+		i2c3 = &qupv3_se10_i2c;
+	};
+};
