@@ -1,0 +1,5 @@
+&msm_vidc {
+	/* Bus BW range (low, high) for each bus */
+	qcom,bus-range-kbps = <1000 1000
+				5500000 6500000>;
+};
