@@ -398,7 +398,7 @@
 
 				config {
 					pins = "gpio19", "gpio20";
-					drive-strength = <2>;
+					drive-strength = <8>;
 					bias-pull-up;
 				};
 			};
