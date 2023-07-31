@@ -3,3 +3,7 @@
                 i2c3 = &qupv3_se10_i2c;
         };
 };
+
+&dai_mi2s1_tx {
+	qcom,msm-mi2s-lines = <2>;
+};
