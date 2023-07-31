@@ -1,0 +1,11 @@
+&qupv3_se0_i2c_active {
+	config {
+		input-enable;
+	};
+};
+
+&qupv3_se0_i2c_sleep {
+	config {
+		input-enable;
+	};
+};
