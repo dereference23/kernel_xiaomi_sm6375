@@ -1,6 +1,12 @@
 #include <dt-bindings/clock/qcom,audio-ext-clk.h>
 #include "msm-audio-lpass.dtsi"
 
+/ {
+        aliases {
+                i2c3 = &qupv3_se10_i2c;
+        };
+};
+
 &msm_audio_ion {
 	iommus = <&apps_smmu 0x00A1 0x0>;
 	qcom,smmu-sid-mask = /bits/ 64 <0xf>;
