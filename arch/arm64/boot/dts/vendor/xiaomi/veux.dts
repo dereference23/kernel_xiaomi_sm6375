@@ -5,3 +5,7 @@
 		i2c3 = &qupv3_se10_i2c;
 	};
 };
+
+&pm6125_l13 {
+	/delete-property/ qcom,proxy-consumer-enable;
+};
