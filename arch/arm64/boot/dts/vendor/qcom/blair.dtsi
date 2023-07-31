@@ -2584,7 +2584,7 @@
 		phy-names = "ufsphy";
 		#reset-cells = <1>;
 		limit-phy-submode = <0>;
-		spm-level = <5>;
+		spm-level = <3>;
 		rpm-level = <3>;
 
 		lanes-per-direction = <1>;
