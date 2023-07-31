@@ -20,6 +20,7 @@
 					pins = "gpio0", "gpio1";
 					drive-strength = <2>;
 					bias-pull-up;
+					input-enable;
 				};
 			};
 
@@ -33,6 +34,7 @@
 					pins = "gpio0", "gpio1";
 					drive-strength = <2>;
 					bias-disable;
+					input-enable;
 				};
 			};
 		};
