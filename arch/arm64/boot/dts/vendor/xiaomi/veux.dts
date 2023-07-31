@@ -43,3 +43,7 @@
 		reg = <0x0 0x300000>;
 	};
 };
+
+&ufshc_mem {
+	spm-level = <3>;
+};
