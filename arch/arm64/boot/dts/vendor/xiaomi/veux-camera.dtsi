@@ -1,0 +1,5 @@
+&soc {
+	/delete-node/ qcom,cci1;
+	cam_cci1: qcom,cci1 {
+	};
+};
