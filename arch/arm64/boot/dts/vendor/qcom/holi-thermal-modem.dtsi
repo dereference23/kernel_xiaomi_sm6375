@@ -143,6 +143,8 @@
 
 &thermal_zones {
 	modem-mmw-pa1-step {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "step_wise";
@@ -187,6 +189,8 @@
 	};
 
 	modem-mmw-pa2-step {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "step_wise";
@@ -231,6 +235,8 @@
 	};
 
 	modem-mmw-pa3-step {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "step_wise";
@@ -305,6 +311,8 @@
 	};
 
 	modem-mmw0-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
@@ -320,6 +328,8 @@
 	};
 
 	modem-mmw1-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
@@ -335,6 +345,8 @@
 	};
 
 	modem-mmw2-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
@@ -350,6 +362,8 @@
 	};
 
 	modem-mmw3-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
@@ -410,6 +424,8 @@
 	};
 
 	modem-streamer-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
@@ -425,6 +441,8 @@
 	};
 
 	modem-mmw0-mod-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
@@ -440,6 +458,8 @@
 	};
 
 	modem-mmw1-mod-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
@@ -455,6 +475,8 @@
 	};
 
 	modem-mmw2-mod-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
@@ -470,6 +492,8 @@
 	};
 
 	modem-mmw3-mod-usr {
+		disable-thermal-zone;
+		status = "disabled";
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
 		thermal-governor = "user_space";
