@@ -9,6 +9,7 @@
 #include "veux-nfc.dtsi"
 #include "veux-pinctrl.dtsi"
 #include "veux-pmic.dtsi"
+#include "veux-thermal.dtsi"
 
 / {
 	aliases {
