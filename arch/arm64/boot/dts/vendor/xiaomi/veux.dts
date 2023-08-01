@@ -44,6 +44,11 @@
 	};
 };
 
+&qcom {
+	console-size = <0x100000>;
+	pmsg-size = <0x100000>;
+};
+
 &ufshc_mem {
 	spm-level = <3>;
 };
