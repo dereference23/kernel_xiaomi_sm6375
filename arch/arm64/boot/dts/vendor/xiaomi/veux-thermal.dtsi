@@ -1,0 +1,71 @@
+&thermal_zones {
+	modem-mmw-pa1-step {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw-pa2-step {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw-pa3-step {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw0-mod-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw0-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw1-mod-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw1-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw2-mod-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw2-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw3-mod-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-mmw3-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	modem-streamer-usr {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	pm6125_tz {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+
+	pmr735a_tz {
+		disable-thermal-zone;
+		status = "disabled";
+	};
+};
