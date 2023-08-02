@@ -2937,13 +2937,12 @@ static int bq_fg_probe(struct i2c_client *client,
 		pr_err("Failed to initialize QG IIO PSY, rc=%d\n", ret);
 	}
 
-	fg_get_manufacture_data(bq);
-	fg_set_fastcharge_mode(bq, false);
-
 	mutex_init(&bq->i2c_rw_lock);
 	mutex_init(&bq->data_lock);
 	device_init_wakeup(bq->dev, 1);
 
+	fg_get_manufacture_data(bq);
+	fg_set_fastcharge_mode(bq, false);
 	fg_update_status(bq);
 
 	//bq->fcc_votable = find_votable("FCC");
