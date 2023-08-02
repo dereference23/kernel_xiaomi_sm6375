@@ -167,9 +167,11 @@ struct usbpd_pm {
 
 	struct notifier_block nb;
 
+	struct work_struct usb_psy_notifier_work;
 	struct work_struct usb_psy_change_work;
 	spinlock_t psy_change_lock;
 
+	struct power_supply *cur_psy;
 	struct power_supply *usb_psy;
 	struct power_supply *sw_psy;
 
