@@ -1714,17 +1714,14 @@ static int usbpd_check_plugout(struct usbpd_pm *pdpm)
 	return ret;
 }
 
-static int usbpd_psy_notifier_cb(struct notifier_block *nb, unsigned long event,
-				 void *data)
+static void usb_psy_notifier_work(struct work_struct *work)
 {
-	struct usbpd_pm *pdpm = container_of(nb, struct usbpd_pm, nb);
-	struct power_supply *psy = data;
+	struct usbpd_pm *pdpm =
+		container_of(work, struct usbpd_pm, usb_psy_notifier_work);
+	struct power_supply *psy = pdpm->cur_psy;
 	unsigned long flags;
 	int ret;
 	static bool firstflg = true;
-
-	if (event != PSY_EVENT_PROP_CHANGED)
-		return NOTIFY_OK;
 
 	if (firstflg) {
 		if (is_cp_chan_valid(pdpm, 0)) {
@@ -1740,27 +1737,27 @@ static int usbpd_psy_notifier_cb(struct notifier_block *nb, unsigned long event,
 	if (!pdpm->isln8000flg) {
 		ret = is_cp_chan_valid(pdpm, 0);
 		if (ret < 0)
-			return NOTIFY_OK;
+			return;
 		if (pm_config.cp_sec_enable) {
 			ret = is_cp_psy_chan_valid(pdpm, 0);
 			if (ret < 0)
-				return NOTIFY_OK;
+				return;
 		}
 	} else {
 		ret = is_cp_chan_valid(pdpm, IIO_SECOND_CHANNEL_OFFSET);
 		if (ret < 0)
-			return NOTIFY_OK;
+			return;
 		if (pm_config.cp_sec_enable) {
 			ret = is_cp_psy_chan_valid(pdpm,
 						   IIO_SECOND_CHANNEL_OFFSET);
 			if (ret < 0)
-				return NOTIFY_OK;
+				return;
 		}
 	}
 	usbpd_check_charger_psy(pdpm);
 	usbpd_check_tcpc(pdpm);
 	if (!pdpm->tcpc)
-		return NOTIFY_OK;
+		return;
 
 	usbpd_check_plugout(pdpm);
 	if (psy == pdpm->usb_psy) {
@@ -1773,7 +1770,18 @@ static int usbpd_psy_notifier_cb(struct notifier_block *nb, unsigned long event,
 		}
 		spin_unlock_irqrestore(&pdpm->psy_change_lock, flags);
 	}
+}
 
+static int usbpd_psy_notifier_cb(struct notifier_block *nb, unsigned long event,
+				 void *data)
+{
+	struct usbpd_pm *pdpm = container_of(nb, struct usbpd_pm, nb);
+
+	if (event != PSY_EVENT_PROP_CHANGED)
+		return NOTIFY_OK;
+
+	pdpm->cur_psy = data;
+	schedule_work(&pdpm->usb_psy_notifier_work);
 	return NOTIFY_OK;
 }
 
@@ -1833,6 +1841,7 @@ static int usbpd_pm_probe(struct platform_device *pdev)
 
 	usbpd_iio_init(pdpm);
 
+	INIT_WORK(&pdpm->usb_psy_notifier_work, usb_psy_notifier_work);
 	INIT_WORK(&pdpm->usb_psy_change_work, usb_psy_change_work);
 
 	spin_lock_init(&pdpm->psy_change_lock);
@@ -1854,6 +1863,7 @@ static int usbpd_pm_remove(struct platform_device *pdev)
 
 	power_supply_unreg_notifier(&__pdpm->nb);
 	cancel_delayed_work(&__pdpm->pm_work);
+	cancel_work_sync(&__pdpm->usb_psy_notifier_work);
 	cancel_work_sync(&__pdpm->usb_psy_change_work);
 	kfree(pdpm);
 	return 0;
