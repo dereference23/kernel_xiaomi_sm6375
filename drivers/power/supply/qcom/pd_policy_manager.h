@@ -167,7 +167,6 @@ struct usbpd_pm {
 
 	struct notifier_block nb;
 
-	//struct work_struct cp_psy_change_work;
 	struct work_struct usb_psy_change_work;
 	spinlock_t psy_change_lock;
 
@@ -176,7 +175,6 @@ struct usbpd_pm {
 
 	int pps_temp_flag;
 	int voltage_max;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
 	struct iio_channel **cp_iio;
 	struct iio_channel **cp_sec_iio;
 	struct iio_channel **bms_iio;
@@ -185,11 +183,6 @@ struct usbpd_pm {
 	struct platform_device *pdev;
 	struct device *dev;
 	int shutdown_flag;
-#else
-	struct power_supply *cp_psy;
-	struct power_supply *cp_sec_psy;
-	struct power_supply *bms_psy;
-#endif
 	bool isln8000flg;
 };
 
