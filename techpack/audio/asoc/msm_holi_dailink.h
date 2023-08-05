@@ -166,8 +166,23 @@ SND_SOC_DAILINK_DEFS(tx3_cdcdma_hostless,
 	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-hostless")));
 
+SND_SOC_DAILINK_DEFS(tx4_cdcdma_hostless,
+	DAILINK_COMP_ARRAY(COMP_CPU("TX4_CDC_DMA_HOSTLESS")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-hostless")));
+
 SND_SOC_DAILINK_DEFS(tert_mi2s_tx_hostless,
 	DAILINK_COMP_ARRAY(COMP_CPU("TERT_MI2S_TX_HOSTLESS")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-hostless")));
+
+SND_SOC_DAILINK_DEFS(sec_mi2s_tx_hostless,
+	DAILINK_COMP_ARRAY(COMP_CPU("SEC_MI2S_TX_HOSTLESS")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-hostless")));
+
+SND_SOC_DAILINK_DEFS(sec_mi2s_rx_hostless,
+	DAILINK_COMP_ARRAY(COMP_CPU("SEC_MI2S_RX_HOSTLESS")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-hostless")));
 
@@ -326,6 +341,19 @@ SND_SOC_DAILINK_DEFS(pri_mi2s_tx,
 	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-tx")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
 
+#ifdef CONFIG_SND_SOC_AW882XX
+SND_SOC_DAILINK_DEFS(sec_mi2s_rx,
+	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-mi2s.2")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("aw882xx_smartpa.1-0034", "aw882xx-aif-3-34"),
+		COMP_CODEC("aw882xx_smartpa.1-0035", "aw882xx-aif-3-35")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
+
+SND_SOC_DAILINK_DEFS(sec_mi2s_tx,
+	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-mi2s.3")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("aw882xx_smartpa.1-0034", "aw882xx-aif-3-34"),
+		COMP_CODEC("aw882xx_smartpa.1-0035", "aw882xx-aif-3-35")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
+#else
 SND_SOC_DAILINK_DEFS(sec_mi2s_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-mi2s.2")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-rx")),
@@ -335,6 +363,7 @@ SND_SOC_DAILINK_DEFS(sec_mi2s_tx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-mi2s.3")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-tx")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
+#endif
 
 SND_SOC_DAILINK_DEFS(tert_mi2s_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-mi2s.4")),
