@@ -1623,10 +1623,11 @@ static int batt_psy_get_prop(struct power_supply *psy,
 		pval->intval = chg->charge_voltage_max;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		rc = batt_get_iio_channel(chg, BMS, BATT_QG_CURRENT_NOW, &current_cur);
+		pval->intval = 0;
 		if (!chg->is_battery_on)
-			pval->intval = 0;
-		pval->intval -= current_cur;
+			break;
+		rc = batt_get_iio_channel(chg, BMS, BATT_QG_CURRENT_NOW, &current_cur);
+		pval->intval = -current_cur;
 		if(chg->ui_soc == 100 && current_cur < 0 && current_cur > -10000 && chg->pd_auth) {
 			pval->intval = 0;
 		}
@@ -1824,6 +1825,7 @@ static int usb_psy_get_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_NOW:
 		rc = batt_get_iio_channel(chg, BMS, BATT_QG_CURRENT_NOW, &chg->batt_current_now);
+		chg->batt_current_now = abs(chg->batt_current_now);
 		val->intval = chg->batt_current_now;
 		break;
 	case POWER_SUPPLY_PROP_CURRENT_MAX:
