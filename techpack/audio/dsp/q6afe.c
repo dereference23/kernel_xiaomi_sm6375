@@ -23,6 +23,7 @@
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
 #include "q6afecal-hwdep.h"
+#include <dsp/apr_elliptic.h>
 
 #define WAKELOCK_TIMEOUT	5000
 #define AFE_CLK_TOKEN	1024
@@ -1200,6 +1201,11 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 		atomic_set(&this_afe.clk_state, 0);
 		atomic_set(&this_afe.clk_status, 0);
 		wake_up(&this_afe.lpass_core_hw_wait);
+	} else if (data->opcode == ULTRASOUND_OPCODE) {
+		if (data->payload)
+			elliptic_process_apr_payload(data->payload);
+		else
+			pr_err("[EXPORT_SYMBOLLUS]: payload ptr is invalid\n");
 	} else if (data->payload_size) {
 		uint32_t *payload;
 		uint16_t port_id = 0;
@@ -2848,6 +2854,16 @@ static void afe_send_cal_spv4_tx(int port_id)
 	}
 
 }
+
+afe_ultrasound_state_t elus_afe = {
+	.ptr_apr = &this_afe.apr,
+	.ptr_status = &this_afe.status,
+	.ptr_state = &this_afe.state,
+	.ptr_wait = this_afe.wait,
+	.ptr_afe_apr_lock = &this_afe.afe_apr_lock,
+	.timeout_ms = TIMEOUT_MS,
+};
+EXPORT_SYMBOL(elus_afe);
 
 static void afe_send_cal_spkr_prot_tx(int port_id)
 {
@@ -7706,6 +7722,7 @@ int afe_stop_pseudo_port(u16 port_id)
 
 	return ret;
 }
+EXPORT_SYMBOL(afe_stop_pseudo_port);
 
 /**
  * afe_req_mmap_handle -
