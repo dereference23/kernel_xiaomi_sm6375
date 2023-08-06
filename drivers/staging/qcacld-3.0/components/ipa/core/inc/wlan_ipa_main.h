@@ -506,12 +506,13 @@ void ipa_flush_pending_vdev_events(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id);
 
 /**
- * ipa_is_ready() - Is IPA register callback is invoked
+ * qca_ipa_is_ready() - Is IPA register callback is invoked
  *
  * Return: true if IPA register callback is invoked or false
  * otherwise
  */
-bool ipa_is_ready(void);
+bool qca_ipa_is_ready(void);
+#define ipa_is_ready qca_ipa_is_ready
 
 /**
  * ipa_init_deinit_lock() - lock ipa init deinit lock
