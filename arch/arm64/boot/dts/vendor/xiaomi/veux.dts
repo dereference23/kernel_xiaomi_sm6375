@@ -26,8 +26,10 @@
 
 &qcom {
 	/delete-property/ mem-type;
-	console-size = <0x100000>;
+	/delete-property/ console-size;
+	record-size = <0x100000>;
 	pmsg-size = <0x100000>;
+	max-reason = <4>;
 };
 
 &ufshc_mem {
