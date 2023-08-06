@@ -10,8 +10,8 @@
 
 /* debug print macro, default closed */
 //#define DEBUG
-#define FSM_DEBUG
-#define FSM_DEBUG_I2C
+//#define FSM_DEBUG
+//#define FSM_DEBUG_I2C
 
 #if defined(__KERNEL__)
 /* kernel module: */
