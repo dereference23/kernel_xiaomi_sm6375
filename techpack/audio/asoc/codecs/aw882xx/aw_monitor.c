@@ -520,7 +520,7 @@ void aw_monitor_start(struct aw_monitor_desc *monitor_desc)
 			struct aw_device, monitor_desc);
 	struct aw882xx *aw882xx = (struct aw882xx *)aw_dev->private_data;
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	monitor_desc->first_entry = AW_FIRST_ENTRY;
 	monitor_desc->samp_count = 0;
@@ -543,7 +543,7 @@ int aw_monitor_stop(struct aw_monitor_desc *monitor_desc)
 	struct aw_device *aw_dev = container_of(monitor_desc,
 			struct aw_device, monitor_desc);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 	if (delayed_work_pending(&monitor_desc->delay_work))
 		cancel_delayed_work_sync(&monitor_desc->delay_work);
 
@@ -1204,7 +1204,7 @@ void aw_monitor_init(struct aw_monitor_desc *monitor_desc)
 	struct aw_device *aw_dev = container_of(monitor_desc,
 				struct aw_device, monitor_desc);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 #ifdef AW_DEBUG
 	monitor_desc->test_vol = 0;
 	monitor_desc->test_temp = 0;
