@@ -1156,7 +1156,7 @@ static void aw_cali_attr_init(struct aw_device *aw_dev)
 {
 	int ret;
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	ret = sysfs_create_group(&aw_dev->dev->kobj, &aw_cali_attr_group);
 	if (ret < 0)
@@ -1829,7 +1829,7 @@ static ssize_t aw_cali_misc_read(struct file *filp, char __user *buf, size_t siz
 	int32_t temp_data[AW_DEV_CH_MAX << 1] = {0};
 	int32_t temp_data1[AW_DEV_CH_MAX << 1] = {0};
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	if (aw_dev->cali_desc.mode == AW_CALI_MODE_NONE) {
 		aw_dev_info(aw_dev->dev, "cali mode is none, can't support misc read");
@@ -2028,7 +2028,7 @@ static ssize_t aw_cali_misc_write(struct file *filp, const char __user *buf, siz
 	struct aw_device *aw_dev = (struct aw_device *)filp->private_data;
 	int ret = 0;
 
-	aw_dev_info(aw_dev->dev, "enter, write size:%d", (int)size);
+	aw_dev_dbg(aw_dev->dev, "enter, write size:%d", (int)size);
 
 	if (aw_dev->cali_desc.mode == AW_CALI_MODE_NONE) {
 		aw_dev_info(aw_dev->dev, "cali mode is none, can't support misc write");
