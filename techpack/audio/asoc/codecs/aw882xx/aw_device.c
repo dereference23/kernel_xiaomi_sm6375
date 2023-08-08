@@ -288,7 +288,7 @@ static int aw_dev_parse_dev_type(struct aw_device *aw_dev,
 	struct aw_cfg_dde *cfg_dde =
 		(struct aw_cfg_dde *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((aw_dev->i2c->adapter->nr == cfg_dde[i].dev_bus) &&
@@ -329,7 +329,7 @@ static int aw_dev_parse_dev_default_type(struct aw_device *aw_dev,
 	struct aw_cfg_dde *cfg_dde =
 		(struct aw_cfg_dde *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((aw_dev->index == cfg_dde[i].dev_index) &&
@@ -368,7 +368,7 @@ static void aw_dev_parse_skt_type(struct aw_device *aw_dev,
 	struct aw_cfg_dde *cfg_dde =
 		(struct aw_cfg_dde *)((char *)prof_hdr + prof_hdr->a_hdr_offset);
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 
 	for (i = 0; i < prof_hdr->a_ddt_num; i++) {
 		if ((aw_dev->index == cfg_dde[i].dev_index) &&
@@ -455,7 +455,7 @@ static int aw_dev_cfg_load(struct aw_device *aw_dev, struct aw_container *aw_cfg
 	struct aw_all_prof_info all_prof_info;
 	int ret;
 
-	aw_dev_info(aw_dev->dev, "enter");
+	aw_dev_dbg(aw_dev->dev, "enter");
 	memset(&all_prof_info, 0, sizeof(struct aw_all_prof_info));
 
 	cfg_hdr = (struct aw_cfg_hdr *)aw_cfg->data;
@@ -621,7 +621,7 @@ static int aw_dev_reg_fw_update(struct aw_device *aw_dev)
 		/*keep amppd status*/
 		if (reg_addr == aw_dev->amppd_desc.reg) {
 			aw_dev->amppd_st = reg_val & (~aw_dev->amppd_desc.mask);
-			aw_dev_info(aw_dev->dev, "amppd_st=0x%04x", aw_dev->amppd_st);
+			aw_dev_dbg(aw_dev->dev, "amppd_st=0x%04x", aw_dev->amppd_st);
 			aw_dev->ops.aw_i2c_read(aw_dev,
 			(unsigned char)reg_addr,
 			(unsigned int *)&read_val);
@@ -643,7 +643,7 @@ static int aw_dev_reg_fw_update(struct aw_device *aw_dev)
 		if (reg_addr == aw_dev->mute_desc.reg) {
 			/*get bin value*/
 			aw_dev->mute_st = reg_val & (~aw_dev->mute_desc.mask);
-			aw_dev_info(aw_dev->dev, "mute_st=0x%04x", aw_dev->mute_st);
+			aw_dev_dbg(aw_dev->dev, "mute_st=0x%04x", aw_dev->mute_st);
 			aw_dev->ops.aw_i2c_read(aw_dev,
 			(unsigned char)reg_addr,
 			(unsigned int *)&read_val);
@@ -733,7 +733,7 @@ static void aw_dev_pwd(struct aw_device *aw_dev, bool pwd)
 				pwd_desc->mask,
 				pwd_desc->disable);
 	}
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 static void aw_dev_amppd(struct aw_device *aw_dev, bool amppd)
@@ -751,7 +751,7 @@ static void aw_dev_amppd(struct aw_device *aw_dev, bool amppd)
 				amppd_desc->mask,
 				amppd_desc->disable);
 	}
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 static void aw_dev_mute(struct aw_device *aw_dev, bool mute)
@@ -771,7 +771,7 @@ static void aw_dev_mute(struct aw_device *aw_dev, bool mute)
 				mute_desc->disable);
 		aw_dev_fade_in(aw_dev);
 	}
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 static int aw_dev_get_icalk(struct aw_device *aw_dev, int16_t *icalk)
@@ -868,7 +868,7 @@ static int aw_dev_set_vcalb(struct aw_device *aw_dev)
 
 	ret =  aw_dev->ops.aw_i2c_write(aw_dev, desc->vcalb_reg, reg_val);
 
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 
 	return ret;
 }
@@ -896,7 +896,7 @@ void aw_dev_clear_int_status(struct aw_device *aw_dev)
 	aw_dev_get_int_status(aw_dev, &int_status);
 	/*make suer int status is clear*/
 	aw_dev_get_int_status(aw_dev, &int_status);
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 }
 
 int aw_dev_set_intmask(struct aw_device *aw_dev, bool flag)
@@ -910,7 +910,7 @@ int aw_dev_set_intmask(struct aw_device *aw_dev, bool flag)
 	else
 		ret = aw_dev->ops.aw_i2c_write(aw_dev, desc->mask_reg,
 					desc->mask_default);
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 	return ret;
 }
 
@@ -935,7 +935,7 @@ static int aw_dev_mode1_pll_check(struct aw_device *aw_dev)
 	if (ret < 0)
 		aw_dev_err(aw_dev->dev, "check fail");
 	else
-		aw_dev_info(aw_dev->dev, "done");
+		aw_dev_dbg(aw_dev->dev, "done");
 
 	return ret;
 }
@@ -1008,7 +1008,7 @@ static int aw_dev_sysst_check(struct aw_device *aw_dev)
 	if (ret < 0)
 		aw_dev_err(aw_dev->dev, "check fail");
 	else
-		aw_dev_info(aw_dev->dev, "done");
+		aw_dev_dbg(aw_dev->dev, "done");
 
 	return ret;
 }
@@ -1234,7 +1234,7 @@ int aw_dev_reg_update(struct aw_device *aw_dev, bool force)
 
 	aw_dev->cur_prof = aw_dev->set_prof;
 
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 	return 0;
 }
 
@@ -1397,7 +1397,7 @@ int aw_device_start(struct aw_device *aw_dev)
 	aw_dev_cali_re_update(aw_dev);
 
 	aw_dev->status = AW_DEV_PW_ON;
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 	return 0;
 }
 
@@ -1435,7 +1435,7 @@ int aw_device_stop(struct aw_device *aw_dev)
 	aw_dev_pwd(aw_dev, true);
 
 	ext_dsp_prof_write = AW_EXT_DSP_WRITE_NONE;
-	aw_dev_info(aw_dev->dev, "done");
+	aw_dev_dbg(aw_dev->dev, "done");
 	return 0;
 }
 
