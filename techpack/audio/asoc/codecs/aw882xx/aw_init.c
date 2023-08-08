@@ -1500,7 +1500,7 @@ static void aw_pid_2113_reg_force_set(struct aw_device *aw_dev)
 				AW_PID_2113_BST_BURST_MASK, AW_PID_2113_BST_BURST_30MA_VALUE);
 		aw_dev_dbg(aw_dev->dev, "force set reg done!");
 	}else {
-		aw_dev_info(aw_dev->dev, "needn't set reg value");
+		aw_dev_dbg(aw_dev->dev, "needn't set reg value");
 	}
 }
 
