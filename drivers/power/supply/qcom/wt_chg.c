@@ -479,9 +479,9 @@ static bool is_bms_chan_valid(struct batt_chg *chip,
 			rc = PTR_ERR(chip->gq_ext_iio_chans[chan]);
 			if (rc == -EPROBE_DEFER)
 				chip->gq_ext_iio_chans[chan] = NULL;
-
-			pr_err("Failed to get IIO channel %s, rc=%d\n",
-				qg_ext_iio_chan_name[chan], rc);
+			else
+				pr_err("Failed to get IIO channel %s, rc=%d\n",
+				       qg_ext_iio_chan_name[chan], rc);
 			return false;
 		}
 	}
@@ -504,8 +504,9 @@ static bool is_cp_chan_valid(struct batt_chg *chip,
 			rc = PTR_ERR(chip->cp_ext_iio_chans[chan]);
 			if (rc == -EPROBE_DEFER)
 				chip->cp_ext_iio_chans[chan] = NULL;
-			pr_err("Failed to get IIO channel %s, rc=%d\n",
-				cp_iio_chan_name[chan], rc);
+			else
+				pr_err("Failed to get IIO channel %s, rc=%d\n",
+				       cp_iio_chan_name[chan], rc);
 			return false;
 		}
 	}
@@ -528,8 +529,9 @@ static bool is_cp_psy_chan_valid(struct batt_chg *chip,
 			rc = PTR_ERR(chip->cp_psy_ext_iio_chans[chan]);
 			if (rc == -EPROBE_DEFER)
 				chip->cp_psy_ext_iio_chans[chan] = NULL;
-			pr_err("Failed to get IIO channel %s, rc=%d\n",
-				cp_sec_iio_chan_name[chan], rc);
+			else
+				pr_err("Failed to get IIO channel %s, rc=%d\n",
+				       cp_sec_iio_chan_name[chan], rc);
 			return false;
 		}
 	}
@@ -552,8 +554,9 @@ static bool is_main_chg_chan_valid(struct batt_chg *chip,
 			rc = PTR_ERR(chip->main_chg_ext_iio_chans[chan]);
 			if (rc == -EPROBE_DEFER)
 				chip->main_chg_ext_iio_chans[chan] = NULL;
-			pr_err("Failed to get IIO channel %s, rc=%d\n",
-				main_iio_chan_name[chan], rc);
+			else
+				pr_err("Failed to get IIO channel %s, rc=%d\n",
+				       main_iio_chan_name[chan], rc);
 			return false;
 		}
 	}
