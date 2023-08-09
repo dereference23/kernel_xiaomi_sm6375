@@ -403,7 +403,7 @@ int elliptic_ultrasound_rx_port_set(struct snd_kcontrol *kcontrol,
 	else
 		ret = elliptic_close_port(ULTRASOUND_RX_PORT_ID);
 
-	EL_PRINT_E("ultrasound_rx_port: enable=%d ret=%d",
+	EL_PRINT_D("ultrasound_rx_port: enable=%d ret=%d",
 		ultrasound_rx_port_cache, ret);
 
 	return 0;
@@ -704,14 +704,14 @@ int elliptic_system_configuration_param_get(
 	struct soc_mixer_control *mc =
 		(struct soc_mixer_control *)kcontrol->private_value;
 
-	pr_err("%s: reg: %d shift: %d\n", __func__, mc->reg, mc->shift);
+	pr_debug("%s: reg: %d shift: %d\n", __func__, mc->reg, mc->shift);
 
 	if (mc->reg != ELLIPTIC_SYSTEM_CONFIGURATION)
 		return -EINVAL;
 
 	if (mc->shift >= ELLIPTIC_SYSTEM_CONFIGURATION_CUSTOM_SETTING_0 &&
 		mc->shift <= ELLIPTIC_SYSTEM_CONFIGURATION_CUSTOM_SETTING_15){
-		EL_PRINT_E("get ELLIPTIC_SYSTEM_CONFIGURATION_CUSTOM_SETTING_%02d",
+		EL_PRINT_D("get ELLIPTIC_SYSTEM_CONFIGURATION_CUSTOM_SETTING_%02d",
 			mc->shift - ELLIPTIC_SYSTEM_CONFIGURATION_CUSTOM_SETTING_0);
 		ucontrol->value.integer.value[0] = 0;
 		return 1;
@@ -817,16 +817,16 @@ int elliptic_system_configuration_param_put(
 		const size_t csi =
 			mc->shift -
 			ELLIPTIC_SYSTEM_CONFIGURATION_CUSTOM_SETTING_0;
-		EL_PRINT_E("ELLIPTIC_SYSTEM_CONFIGURATION_CUSTOM_SETTING_XX csi:%zu", csi);
+		EL_PRINT_D("ELLIPTIC_SYSTEM_CONFIGURATION_CUSTOM_SETTING_XX csi:%zu", csi);
 		if (csi >=
 			ARRAY_SIZE(elliptic_system_configuration_cache.custom_settings))
 			return -EINVAL;
-		EL_PRINT_E("ucontrol->value.integer.value[0]:%ld", ucontrol->value.integer.value[0]);
+		EL_PRINT_D("ucontrol->value.integer.value[0]:%ld", ucontrol->value.integer.value[0]);
 		elliptic_system_configuration_cache.custom_settings[csi] =
 			ucontrol->value.integer.value[0];
 		param.type = ESCPT_ENGINE_CUSTOM_SETTING_0 + csi;
 		param.custom_setting = ucontrol->value.integer.value[0];
-		EL_PRINT_E("calling elliptic_data_write(custom_setting) csi:%zu", csi);
+		EL_PRINT_D("calling elliptic_data_write(custom_setting) csi:%zu", csi);
 		return elliptic_data_write(ELLIPTIC_ULTRASOUND_SET_PARAMS,
 				  (const char *)&param, sizeof(param));
 	}
