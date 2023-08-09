@@ -195,7 +195,7 @@ static int32_t process_version_msg(uint32_t *payload, uint32_t payload_size)
 	size_t copy_size = 0;
 	int32_t  ret = -1;
 
-	pr_err("[ELUS]: %s() size:%d\n", __func__, payload_size);
+	pr_debug("[ELUS]: %s() size:%d\n", __func__, payload_size);
 
 	if (payload_size >= ELLIPTIC_VERSION_INFO_SIZE) {
 		pr_debug("[ELUS]: elliptic_version copied to local AP cache");
@@ -218,7 +218,7 @@ static int32_t process_branch_msg(uint32_t *payload, uint32_t payload_size)
 	size_t copy_size = 0;
 	int32_t  ret = -1;
 
-	pr_err("[ELUS]: %s() size:%d\n", __func__, payload_size);
+	pr_debug("[ELUS]: %s() size:%d\n", __func__, payload_size);
 
 	if (payload_size >= ELLIPTIC_BRANCH_INFO_SIZE) {
 		pr_debug("[ELUS]: elliptic_branch copied to local AP cache");
@@ -241,7 +241,7 @@ static int32_t process_tag_msg(uint32_t *payload, uint32_t payload_size)
 	size_t copy_size = 0;
 	int32_t  ret = -1;
 
-	pr_err("[ELUS]: %s() size:%d\n", __func__, payload_size);
+	pr_debug("[ELUS]: %s() size:%d\n", __func__, payload_size);
 
 	if (payload_size >= ELLIPTIC_TAG_INFO_SIZE) {
 		pr_debug("[ELUS]: elliptic_tag copied to local AP cache");
@@ -264,7 +264,7 @@ static int32_t process_calibration_msg(uint32_t *payload, uint32_t payload_size)
 	size_t copy_size = 0;
 	int32_t  ret = -1;
 
-	pr_err("[ELUS]: %s() size:%d\n", __func__, payload_size);
+	pr_debug("[ELUS]: %s() size:%d\n", __func__, payload_size);
 
 	if (payload_size >= ELLIPTIC_CALIBRATION_DATA_SIZE) {
 		pr_debug("[ELUS]: calibration_data copied to local AP cache");
@@ -288,7 +288,7 @@ static int32_t process_calibration_v2_msg(uint32_t *payload, uint32_t payload_si
 	size_t copy_size = 0;
 	int32_t  ret = -1;
 
-	pr_err("[ELUS]: %s() size:%d\n", __func__, payload_size);
+	pr_debug("[ELUS]: %s() size:%d\n", __func__, payload_size);
 
 	if (payload_size >= ELLIPTIC_CALIBRATION_V2_DATA_SIZE) {
 		pr_debug("[ELUS]: calibration_data copied to local AP cache");
@@ -312,7 +312,7 @@ static int32_t process_ml_msg(uint32_t *payload, uint32_t payload_size)
 	size_t copy_size = 0;
 	int32_t  ret = -1;
 
-	pr_err("[ELUS]: %s() size:%d\n", __func__, payload_size);
+	pr_debug("[ELUS]: %s() size:%d\n", __func__, payload_size);
 
 	if (payload_size >= ELLIPTIC_ML_DATA_SIZE) {
 		pr_debug("[ELUS]: ml_data copied to local AP cache");
@@ -335,7 +335,7 @@ static int32_t process_diagnostics_msg(uint32_t *payload, uint32_t payload_size)
 	size_t copy_size = 0;
 	int32_t  ret = -1;
 
-	pr_err("[ELUS]: %s() size:%d\n", __func__, payload_size);
+	pr_debug("[ELUS]: %s() size:%d\n", __func__, payload_size);
 
 	if (payload_size >= ELLIPTIC_DIAGNOSTICS_DATA_SIZE) {
 		pr_debug("[ELUS]: diagnostics_data copied to local AP cache");
@@ -356,7 +356,7 @@ static int32_t process_sensorhub_msg(uint32_t *payload, uint32_t payload_size)
 {
 	int32_t  ret = 0;
 
-	pr_err("[ELUS]: %s, paramId:%u, size:%d\n",
+	pr_debug("[ELUS]: %s, paramId:%u, size:%d\n",
 			__func__, payload[1], payload_size);
 
 	return ret;
