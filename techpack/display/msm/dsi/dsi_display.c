@@ -9,6 +9,7 @@
 #include <linux/of_gpio.h>
 #include <linux/err.h>
 
+#include <drm/drm_notifier.h>
 #include "msm_drv.h"
 #include "sde_connector.h"
 #include "msm_mmu.h"
@@ -1239,6 +1240,7 @@ static void _dsi_display_setup_misr(struct dsi_display *display)
 int dsi_display_set_power(struct drm_connector *connector,
 		int power_mode, void *disp)
 {
+	struct drm_notify_data g_notify_data;
 	struct dsi_display *display = disp;
 	int rc = 0;
 
@@ -1247,18 +1249,23 @@ int dsi_display_set_power(struct drm_connector *connector,
 		return -EINVAL;
 	}
 
+	g_notify_data.data = &power_mode;
 	switch (power_mode) {
 	case SDE_MODE_DPMS_LP1:
+		drm_notifier_call_chain(DRM_EARLY_EVENT_BLANK, &g_notify_data);
 		if (display->panel->power_mode == SDE_MODE_DPMS_LP2) {
 			if (dsi_display_set_ulp_load(display, false) < 0)
 				DSI_WARN("failed to set load for lp1 state\n");
 		}
 		rc = dsi_panel_set_lp1(display->panel);
+		drm_notifier_call_chain(DRM_EVENT_BLANK, &g_notify_data);
 		break;
 	case SDE_MODE_DPMS_LP2:
+		drm_notifier_call_chain(DRM_EARLY_EVENT_BLANK, &g_notify_data);
 		rc = dsi_panel_set_lp2(display->panel);
 		if (dsi_display_set_ulp_load(display, true) < 0)
 			DSI_WARN("failed to set load for lp2 state\n");
+		drm_notifier_call_chain(DRM_EVENT_BLANK, &g_notify_data);
 		break;
 	case SDE_MODE_DPMS_ON:
 		if (display->panel->power_mode == SDE_MODE_DPMS_LP2) {
@@ -1266,8 +1273,13 @@ int dsi_display_set_power(struct drm_connector *connector,
 				DSI_WARN("failed to set load for on state\n");
 		}
 		if ((display->panel->power_mode == SDE_MODE_DPMS_LP1) ||
-			(display->panel->power_mode == SDE_MODE_DPMS_LP2))
+		    (display->panel->power_mode == SDE_MODE_DPMS_LP2)) {
+			drm_notifier_call_chain(DRM_EARLY_EVENT_BLANK,
+						&g_notify_data);
 			rc = dsi_panel_set_nolp(display->panel);
+			drm_notifier_call_chain(DRM_EVENT_BLANK,
+						&g_notify_data);
+		}
 		break;
 	case SDE_MODE_DPMS_OFF:
 	default:
