@@ -24,6 +24,10 @@
 #define SET_EMULATOR_TEST_POINT		_IOW(0xE9, 0x05, long)
 #define NFCC_INITIAL_CORE_RESET_NTF	_IOW(0xE9, 0x10, long)
 
+#define NFC_SET_PWR_32			_IOW(0xE9, 0x01, uint32_t)
+#define ESE_SET_PWR_32			_IOW(0xE9, 0x02, uint32_t)
+#define ESE_GET_PWR_32			_IOR(0xE9, 0x03, uint32_t)
+
 #define DEV_COUNT			1
 #define DEVICE_NAME			"pn553"
 #define CLASS_NAME			"nqx"
