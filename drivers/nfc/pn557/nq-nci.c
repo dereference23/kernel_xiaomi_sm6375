@@ -939,12 +939,15 @@ static long nfc_compat_ioctl(struct file *pfile, unsigned int cmd,
 	arg = (compat_u64)arg;
 	switch (cmd) {
 	case NFC_SET_PWR:
+	case NFC_SET_PWR_32:
 		nfc_ioctl_power_states(pfile, arg);
 		break;
 	case ESE_SET_PWR:
+	case ESE_SET_PWR_32:
 		nqx_ese_pwr(pfile->private_data, arg);
 		break;
 	case ESE_GET_PWR:
+	case ESE_GET_PWR_32:
 		nqx_ese_pwr(pfile->private_data, 3);
 		break;
 	case SET_RX_BLOCK:
@@ -1005,9 +1008,11 @@ static long nfc_ioctl(struct file *pfile, unsigned int cmd,
 
 	switch (cmd) {
 	case NFC_SET_PWR:
+	case NFC_SET_PWR_32:
 		r = nfc_ioctl_power_states(pfile, arg);
 		break;
 	case ESE_SET_PWR:
+	case ESE_SET_PWR_32:
 		if ((nqx_dev->nqx_info.info.chip_type == NFCC_SN100_A) ||
 			(nqx_dev->nqx_info.info.chip_type == NFCC_SN100_B))
 			r = sn100_ese_pwr(nqx_dev, arg);
@@ -1015,6 +1020,7 @@ static long nfc_ioctl(struct file *pfile, unsigned int cmd,
 			r = nqx_ese_pwr(nqx_dev, arg);
 		break;
 	case ESE_GET_PWR:
+	case ESE_GET_PWR_32:
 		if ((nqx_dev->nqx_info.info.chip_type == NFCC_SN100_A) ||
 			(nqx_dev->nqx_info.info.chip_type == NFCC_SN100_B))
 			r = sn100_ese_pwr(nqx_dev, 3);
