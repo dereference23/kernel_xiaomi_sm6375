@@ -43,6 +43,7 @@
 #include "sde_hw_qdss.h"
 #include "sde_encoder_dce.h"
 #include "sde_vm.h"
+#include "dsi_display.h"
 
 #define SDE_DEBUG_ENC(e, fmt, ...) SDE_DEBUG("enc%d " fmt,\
 		(e) ? (e)->base.base.id : -1, ##__VA_ARGS__)
@@ -4269,6 +4270,8 @@ static int _sde_encoder_reset_ctl_hw(struct drm_encoder *drm_enc)
 void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error,
 		bool config_changed)
 {
+	struct dsi_display *display;
+	struct sde_connector *sde_conn;
 	struct sde_encoder_virt *sde_enc;
 	struct sde_encoder_phys *phys;
 	unsigned int i;
@@ -4298,6 +4301,11 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error,
 
 		SDE_EVT32(DRMID(drm_enc), i, SDE_EVTLOG_FUNC_CASE1);
 	}
+
+	sde_conn = to_sde_connector(sde_enc->cur_master->connector);
+	display = sde_conn->display;
+	if (likely(display && display->panel))
+		dsi_set_backlight_control(display->panel);
 
 	/* All phys encs are ready to go, trigger the kickoff */
 	_sde_encoder_kickoff_phys(sde_enc, config_changed);
