@@ -280,6 +280,8 @@ struct dsi_panel {
 
 	enum dsi_doze_type doze_status;
 	u32 doze_hbm_threshold;
+
+	u8 dsi_refresh_flag;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
@@ -415,4 +417,6 @@ int dsi_panel_create_cmd_packets(const char *data, u32 length, u32 count,
 void dsi_panel_destroy_cmd_packets(struct dsi_panel_cmd_set *set);
 
 void dsi_panel_dealloc_cmd_packets(struct dsi_panel_cmd_set *set);
+
+void dsi_set_backlight_control(struct dsi_panel *panel);
 #endif /* _DSI_PANEL_H_ */
