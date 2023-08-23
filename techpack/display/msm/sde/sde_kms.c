@@ -3992,6 +3992,7 @@ retry:
 			continue;
 
 		lp = sde_connector_get_lp(conn);
+#ifndef CONFIG_WT_QGKI
 		if (lp == SDE_MODE_DPMS_LP1) {
 			/* transition LP1->LP2 on pm suspend */
 			ret = sde_connector_set_property_for_commit(conn, state,
@@ -4003,6 +4004,7 @@ retry:
 				goto unlock;
 			}
 		}
+#endif
 
 		if (lp != SDE_MODE_DPMS_LP2) {
 			/* force CRTC to be inactive */
