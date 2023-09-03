@@ -16,12 +16,8 @@
 #include <asm/atomic_lse.h>
 #include <asm/cpucaps.h>
 
-extern struct static_key_false cpu_hwcap_keys[ARM64_NCAPS];
-
-static __always_inline bool system_uses_lse_atomics(void)
-{
-	return static_branch_likely(&cpu_hwcap_keys[ARM64_HAS_LSE_ATOMICS]);
-}
+/* Always use LSE atomics */
+#define system_uses_lse_atomics() true
 
 #define __lse_ll_sc_body(op, ...)					\
 ({									\
@@ -31,8 +27,7 @@ static __always_inline bool system_uses_lse_atomics(void)
 })
 
 /* In-line patching at runtime */
-#define ARM64_LSE_ATOMIC_INSN(llsc, lse)				\
-	ALTERNATIVE(llsc, __LSE_PREAMBLE lse, ARM64_HAS_LSE_ATOMICS)
+#define ARM64_LSE_ATOMIC_INSN(llsc, lse)	__LSE_PREAMBLE lse
 
 #else	/* CONFIG_ARM64_LSE_ATOMICS */
 
