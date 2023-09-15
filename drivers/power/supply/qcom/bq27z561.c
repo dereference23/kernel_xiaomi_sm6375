@@ -42,11 +42,7 @@ enum print_reason {
 	PR_OEM		= BIT(2),
 	PR_DEBUG	= BIT(3),
 };
-
-static int debug_mask = PR_OEM;
-module_param_named(
-	debug_mask, debug_mask, int, 0600
-);
+#define debug_mask PR_INTERRUPT
 
 #define	INVALID_REG_ADDR	0xFF
 
