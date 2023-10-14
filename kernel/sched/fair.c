@@ -6678,12 +6678,11 @@ static void walt_find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 	unsigned int target_nr_rtg_high_prio = UINT_MAX;
 	bool rtg_high_prio_task = task_rtg_high_prio(p);
 	cpumask_t visit_cpus;
-	bool io_task_pack = (order_index > 0 && p->in_iowait);
 
 	/* Find start CPU based on boost value */
 	start_cpu = fbt_env->start_cpu;
 
-	if (fbt_env->strict_max || io_task_pack)
+	if (fbt_env->strict_max)
 		target_max_spare_cap = LONG_MIN;
 
 	if (p->state == TASK_RUNNING)
@@ -6769,8 +6768,7 @@ static void walt_find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 			 * than the one required to boost the task.
 			 */
 			new_util = max(min_util, new_util);
-			if (!(fbt_env->strict_max || io_task_pack) &&
-					new_util > capacity_orig)
+			if (!fbt_env->strict_max && new_util > capacity_orig)
 				continue;
 
 			/*
@@ -8254,10 +8252,6 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
 	 * don't allow pull boost task to smaller cores.
 	 */
 	if (!can_migrate_boosted_task(p, env->src_cpu, env->dst_cpu))
-		return 0;
-
-	if (p->in_iowait && is_min_capacity_cpu(env->dst_cpu) &&
-			!is_min_capacity_cpu(env->src_cpu))
 		return 0;
 
 	/* Disregard pcpu kthreads; they are where they need to be. */
