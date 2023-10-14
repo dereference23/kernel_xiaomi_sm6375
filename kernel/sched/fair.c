@@ -6676,7 +6676,6 @@ static void walt_find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 	int cluster;
 	unsigned int target_nr_rtg_high_prio = UINT_MAX;
 	bool rtg_high_prio_task = task_rtg_high_prio(p);
-	cpumask_t visit_cpus;
 
 	/* Find start CPU based on boost value */
 	start_cpu = fbt_env->start_cpu;
@@ -6702,13 +6701,16 @@ static void walt_find_best_target(struct sched_domain *sd, cpumask_t *cpus,
 		}
 	}
 	for (cluster = 0; cluster < num_sched_clusters; cluster++) {
-		cpumask_and(&visit_cpus, &p->cpus_mask,
-				&cpu_array[order_index][cluster]);
-		for_each_cpu(i, &visit_cpus) {
+
+		for_each_cpu_and(i, &p->cpus_mask,
+				&cpu_array[order_index][cluster]) {
 			unsigned long capacity_orig = capacity_orig_of(i);
 			unsigned long wake_util, new_util, new_util_cuml;
 			long spare_cap;
 			int idle_idx = INT_MAX;
+
+			if (!cpumask_test_cpu(i, &p->cpus_mask))
+				continue;
 
 			trace_sched_cpu_util(i);
 
