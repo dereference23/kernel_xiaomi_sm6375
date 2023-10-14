@@ -7238,9 +7238,7 @@ void __init sched_init(void)
 
 	init_uclamp();
 
-#ifdef CONFIG_CGROUP_SCHED
 	walt_init_sched_boost(&root_task_group);
-#endif
 
 	scheduler_running = 1;
 }
