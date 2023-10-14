@@ -3050,7 +3050,6 @@ static inline struct walt_related_thread_group
 	return rcu_dereference(p->wts.grp);
 }
 
-/* applying the task threshold for all types of low latency tasks. */
 static inline bool walt_low_latency_task(struct task_struct *p)
 {
 	return p->wts.low_latency &&
