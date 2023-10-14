@@ -148,7 +148,6 @@ static int six_hundred_forty_kb = 640 * 1024;
 #ifdef CONFIG_SCHED_WALT
 static int neg_three = -3;
 static int three = 3;
-static int fifty = 50;
 static int two_hundred_fifty_five = 255;
 const int sched_user_hint_max = 1000;
 static unsigned int ns_per_sec = NSEC_PER_SEC;
@@ -624,16 +623,6 @@ static struct ctl_table kern_table[] = {
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec,
 	},
-	{
-		.procname	= "sched_cpu_high_irqload",
-		.data		= &sysctl_walt_cpu_high_irqload,
-		.maxlen		= sizeof(unsigned int),
-		.mode		= 0644,
-		.proc_handler	= walt_high_irqload_handler,
-		.extra1		= &fifty,
-		.extra2		= &one_hundred,
-	},
-
 #endif
 	{
 		.procname	= "sched_force_lb_enable",
