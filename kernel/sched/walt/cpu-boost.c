@@ -330,7 +330,7 @@ static struct input_handler cpuboost_input_handler = {
 };
 
 struct kobject *cpu_boost_kobj;
-int cpu_boost_init(void)
+static int cpu_boost_init(void)
 {
 	int cpu, ret;
 	struct cpu_sync *s;
@@ -386,3 +386,4 @@ int cpu_boost_init(void)
 	ret = input_register_handler(&cpuboost_input_handler);
 	return 0;
 }
+late_initcall(cpu_boost_init);
