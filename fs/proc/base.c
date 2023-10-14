@@ -1565,7 +1565,7 @@ static int sched_low_latency_show(struct seq_file *m, void *v)
 	if (!p)
 		return -ESRCH;
 
-	low_latency = p->wts.low_latency & WALT_LOW_LATENCY_PROCFS;
+	low_latency = p->wts.low_latency;
 	seq_printf(m, "%d\n", low_latency);
 
 	put_task_struct(p);
@@ -1588,10 +1588,7 @@ sched_low_latency_write(struct file *file, const char __user *buf,
 	if (err)
 		goto out;
 
-	if (low_latency)
-		p->wts.low_latency |= WALT_LOW_LATENCY_PROCFS;
-	else
-		p->wts.low_latency &= ~WALT_LOW_LATENCY_PROCFS;
+	p->wts.low_latency = low_latency;
 out:
 	put_task_struct(p);
 	return err < 0 ? err : count;
