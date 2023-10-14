@@ -3102,21 +3102,14 @@ extern struct walt_sched_cluster *rq_cluster(struct rq *rq);
 #ifdef CONFIG_UCLAMP_TASK_GROUP
 static inline bool task_sched_boost(struct task_struct *p)
 {
-	struct cgroup_subsys_state *css;
+	struct cgroup_subsys_state *css = task_css(p, cpu_cgrp_id);
 	struct task_group *tg;
-	bool sched_boost_enabled;
 
-	rcu_read_lock();
-	css = task_css(p, cpu_cgrp_id);
-	if (!css) {
-		rcu_read_unlock();
+	if (!css)
 		return false;
-	}
 	tg = container_of(css, struct task_group, css);
-	sched_boost_enabled = tg->wtg.sched_boost_enabled;
-	rcu_read_unlock();
 
-	return sched_boost_enabled;
+	return tg->wtg.sched_boost_enabled;
 }
 
 extern int sync_cgroup_colocation(struct task_struct *p, bool insert);
