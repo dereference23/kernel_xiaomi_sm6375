@@ -29,7 +29,6 @@ extern unsigned int sysctl_sched_latency;
 extern unsigned int sysctl_sched_min_granularity;
 extern unsigned int sysctl_sched_wakeup_granularity;
 extern unsigned int sysctl_sched_child_runs_first;
-extern unsigned int sysctl_sched_force_lb_enable;
 #ifdef CONFIG_QCOM_HYP_CORE_CTL
 extern unsigned int sysctl_hh_suspend_timeout_ms;
 #endif
