@@ -2173,8 +2173,8 @@ static inline int hrtick_enabled(struct rq *rq)
 #endif /* CONFIG_SCHED_HRTICK */
 
 #ifdef CONFIG_SCHED_WALT
-u64 sched_ktime_clock(void);
-unsigned long
+u64 __weak sched_ktime_clock(void);
+unsigned long __weak
 cpu_util_freq_walt(int cpu, struct sched_walt_cpu_load *walt_load);
 #else
 #define sched_ravg_window TICK_NSEC
@@ -2952,10 +2952,10 @@ extern unsigned int max_power_cost;
 extern unsigned int __read_mostly __weak sched_init_task_load_windows;
 extern unsigned int  __read_mostly __weak sched_load_granule;
 
-extern int update_preferred_cluster(struct related_thread_group *grp,
+extern int __weak update_preferred_cluster(struct related_thread_group *grp,
 			struct task_struct *p, u32 old_load, bool from_tick);
-extern void set_preferred_cluster(struct related_thread_group *grp);
-extern void add_new_task_to_grp(struct task_struct *new);
+extern void __weak set_preferred_cluster(struct related_thread_group *grp);
+extern void __weak add_new_task_to_grp(struct task_struct *new);
 
 #define NO_BOOST 0
 #define FULL_THROTTLE_BOOST 1
@@ -3102,7 +3102,7 @@ static inline bool is_full_throttle_boost(void)
 	return sched_boost() == FULL_THROTTLE_BOOST;
 }
 
-extern int preferred_cluster(struct sched_cluster *cluster,
+extern int __weak preferred_cluster(struct sched_cluster *cluster,
 						struct task_struct *p);
 extern struct sched_cluster *rq_cluster(struct rq *rq);
 
@@ -3119,7 +3119,7 @@ static inline bool task_sched_boost(struct task_struct *p)
 	return tg->sched_boost_enabled;
 }
 
-extern int sync_cgroup_colocation(struct task_struct *p, bool insert);
+extern int __weak sync_cgroup_colocation(struct task_struct *p, bool insert);
 extern void update_cgroup_boost_settings(void);
 extern void restore_cgroup_boost_settings(void);
 #else
@@ -3138,9 +3138,9 @@ static inline void update_cgroup_boost_settings(void) { }
 static inline void restore_cgroup_boost_settings(void) { }
 #endif
 
-extern int alloc_related_thread_groups(void);
+extern int __weak alloc_related_thread_groups(void);
 
-extern void check_for_migration(struct rq *rq, struct task_struct *p);
+extern void __weak check_for_migration(struct rq *rq, struct task_struct *p);
 
 static inline int is_reserved(int cpu)
 {
@@ -3177,21 +3177,21 @@ static inline void walt_fixup_cum_window_demand(struct rq *rq, s64 scaled_delta)
 		rq->cum_window_demand_scaled = 0;
 }
 
-extern unsigned long thermal_cap(int cpu);
+extern unsigned long __weak thermal_cap(int cpu);
 
-extern void clear_walt_request(int cpu);
+extern void __weak clear_walt_request(int cpu);
 
 extern enum sched_boost_policy sched_boost_policy(void);
 extern void sched_boost_parse_dt(void);
-extern void clear_ed_task(struct task_struct *p, struct rq *rq);
-extern bool early_detection_notify(struct rq *rq, u64 wallclock);
+extern void __weak clear_ed_task(struct task_struct *p, struct rq *rq);
+extern bool __weak early_detection_notify(struct rq *rq, u64 wallclock);
 
 static inline unsigned int power_cost(int cpu, u64 demand)
 {
 	return cpu_max_possible_capacity(cpu);
 }
 
-void note_task_waking(struct task_struct *p, u64 wallclock);
+void __weak note_task_waking(struct task_struct *p, u64 wallclock);
 
 static inline bool task_placement_boost_enabled(struct task_struct *p)
 {
@@ -3224,11 +3224,11 @@ static inline bool is_min_capacity_cluster(struct sched_cluster *cluster)
 	return is_min_capacity_cpu(cluster_first_cpu(cluster));
 }
 
-extern void walt_fixup_sched_stats_fair(struct rq *rq,
+extern void __weak walt_fixup_sched_stats_fair(struct rq *rq,
 					struct task_struct *p,
 					u16 updated_demand_scaled,
 					u16 updated_pred_demand_scaled);
-extern void walt_fixup_nr_big_tasks(struct rq *rq, struct task_struct *p,
+extern void __weak walt_fixup_nr_big_tasks(struct rq *rq, struct task_struct *p,
 					int delta, bool inc);
 #else   /* CONFIG_SCHED_WALT */
 
@@ -3406,7 +3406,7 @@ walt_dec_cfs_rq_stats(struct cfs_rq *cfs_rq, struct task_struct *p) {}
 
 #ifdef CONFIG_SMP
 #ifdef CONFIG_SCHED_WALT
-extern int group_balance_cpu_not_isolated(struct sched_group *sg);
+extern int __weak group_balance_cpu_not_isolated(struct sched_group *sg);
 #else
 static inline int group_balance_cpu_not_isolated(struct sched_group *sg)
 {
@@ -3426,10 +3426,10 @@ extern void migrate_tasks(struct rq *dead_rq, struct rq_flags *rf,
 					bool migrate_pinned_tasks);
 extern void calc_load_migrate(struct rq *rq);
 #ifdef CONFIG_SCHED_WALT
-extern void
+extern void __weak
 detach_one_task_core(struct task_struct *p, struct rq *rq,
 						struct list_head *tasks);
-extern void attach_tasks_core(struct list_head *tasks, struct rq *rq);
+extern void __weak attach_tasks_core(struct list_head *tasks, struct rq *rq);
 #else
 static inline void
 detach_one_task_core(struct task_struct *p, struct rq *rq,
