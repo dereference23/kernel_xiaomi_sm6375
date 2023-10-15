@@ -75,10 +75,7 @@ struct task_struct init_task
 	.cpus_mask	= CPU_MASK_ALL,
 	.nr_cpus_allowed= NR_CPUS,
 #ifdef CONFIG_SCHED_WALT
-	.wts		= {
-		.cpus_requested	= CPU_MASK_ALL,
-		.wake_up_idle	= false,
-	},
+	.cpus_requested	= CPU_MASK_ALL,
 #endif
 	.mm		= NULL,
 	.active_mm	= &init_mm,
@@ -98,6 +95,9 @@ struct task_struct init_task
 #endif
 #ifdef CONFIG_CGROUP_SCHED
 	.sched_task_group = &root_task_group,
+#endif
+#ifdef CONFIG_SCHED_WALT
+	.wake_up_idle	= false,
 #endif
 	.ptraced	= LIST_HEAD_INIT(init_task.ptraced),
 	.ptrace_entry	= LIST_HEAD_INIT(init_task.ptrace_entry),
