@@ -562,7 +562,7 @@ static inline int  hh_vpm_grp_populate_info(u64 cap_id, int virq_num)
 #endif /* CONFIG_QCOM_HYP_CORE_CTL */
 
 #ifdef CONFIG_SCHED_WALT
-extern void walt_task_dead(struct task_struct *p);
+extern void sched_exit(struct task_struct *p);
 extern int
 register_cpu_cycle_counter_cb(struct cpu_cycle_counter_cb *cb);
 extern void
@@ -637,7 +637,7 @@ struct walt_task_struct {
 };
 
 #else
-static inline void walt_task_dead(struct task_struct *p) { }
+static inline void sched_exit(struct task_struct *p) { }
 
 static inline int
 register_cpu_cycle_counter_cb(struct cpu_cycle_counter_cb *cb)
