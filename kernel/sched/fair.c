@@ -10894,15 +10894,11 @@ static inline int find_new_ilb(void)
 {
 	int ilb;
 
-	if (static_branch_likely(&sched_asym_cpucapacity))
+	if (sched_energy_enabled())
 		return find_energy_aware_new_ilb();
 
 	for_each_cpu_and(ilb, nohz.idle_cpus_mask,
 			      housekeeping_cpumask(HK_FLAG_MISC)) {
-#ifdef CONFIG_SCHED_WALT
-		if (cpu_isolated(ilb))
-			continue;
-#endif
 		if (idle_cpu(ilb))
 			return ilb;
 	}
