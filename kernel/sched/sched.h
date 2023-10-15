@@ -2190,14 +2190,14 @@ unsigned long capacity_curr_of(int cpu);
 #ifdef CONFIG_SCHED_WALT
 static inline int per_task_boost(struct task_struct *p)
 {
-	if (p->wts.boost_period) {
-		if (sched_clock() > p->wts.boost_expires) {
-			p->wts.boost_period = 0;
-			p->wts.boost_expires = 0;
-			p->wts.boost = 0;
+	if (p->boost_period) {
+		if (sched_clock() > p->boost_expires) {
+			p->boost_period = 0;
+			p->boost_expires = 0;
+			p->boost = 0;
 		}
 	}
-	return p->wts.boost;
+	return p->boost;
 }
 #else
 static inline int per_task_boost(struct task_struct *p)
@@ -2220,7 +2220,7 @@ static inline unsigned long capacity_orig_of(int cpu)
 static inline unsigned long task_util(struct task_struct *p)
 {
 #ifdef CONFIG_SCHED_WALT
-	return p->wts.demand_scaled;
+	return p->ravg.demand_scaled;
 #endif
 	return READ_ONCE(p->se.avg.util_avg);
 }
@@ -3001,23 +3001,23 @@ static inline bool is_min_capacity_cpu(int cpu)
 
 static inline unsigned int task_load(struct task_struct *p)
 {
-	return p->wts.demand;
+	return p->ravg.demand;
 }
 
 static inline unsigned int task_pl(struct task_struct *p)
 {
-	return p->wts.pred_demand;
+	return p->ravg.pred_demand;
 }
 
 static inline bool task_in_related_thread_group(struct task_struct *p)
 {
-	return (rcu_access_pointer(p->wts.grp) != NULL);
+	return !!(rcu_access_pointer(p->grp) != NULL);
 }
 
 static inline
 struct related_thread_group *task_related_thread_group(struct task_struct *p)
 {
-	return rcu_dereference(p->wts.grp);
+	return rcu_dereference(p->grp);
 }
 
 /* Is frequency of two cpus synchronized with each other? */
@@ -3120,8 +3120,8 @@ static inline void clear_reserved(int cpu)
 static inline bool
 task_in_cum_window_demand(struct rq *rq, struct task_struct *p)
 {
-	return cpu_of(rq) == task_cpu(p) && (p->on_rq ||
-		p->wts.last_sleep_ts >= rq->window_start);
+	return cpu_of(rq) == task_cpu(p) && (p->on_rq || p->last_sleep_ts >=
+							 rq->window_start);
 }
 
 static inline void walt_fixup_cum_window_demand(struct rq *rq, s64 scaled_delta)
