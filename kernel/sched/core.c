@@ -2891,11 +2891,11 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 	p->se.nr_migrations		= 0;
 	p->se.vruntime			= 0;
 #ifdef CONFIG_SCHED_WALT
-	p->wts.last_sleep_ts		= 0;
-	p->wts.wake_up_idle			= false;
-	p->wts.boost			= 0;
-	p->wts.boost_expires		= 0;
-	p->wts.boost_period			= 0;
+	p->last_sleep_ts		= 0;
+	p->wake_up_idle			= false;
+	p->boost			= 0;
+	p->boost_expires		= 0;
+	p->boost_period			= 0;
 #endif
 	INIT_LIST_HEAD(&p->se.group_node);
 
@@ -4305,7 +4305,7 @@ static void __sched notrace __schedule(bool preempt)
 	if (likely(prev != next)) {
 #ifdef CONFIG_SCHED_WALT
 		if (!prev->on_rq)
-			prev->wts.last_sleep_ts = wallclock;
+			prev->last_sleep_ts = wallclock;
 #endif
 
 		walt_update_task_ravg(prev, rq, PUT_PREV_TASK, wallclock, 0);
@@ -5773,8 +5773,7 @@ again:
 
 #ifdef CONFIG_SCHED_WALT
 	if (!retval && !(p->flags & PF_KTHREAD))
-		cpumask_and(&p->wts.cpus_requested,
-			in_mask, cpu_possible_mask);
+		cpumask_and(&p->cpus_requested, in_mask, cpu_possible_mask);
 #endif
 
 out_free_new_mask:
@@ -6928,7 +6927,7 @@ void __init sched_init_smp(void)
 	if (set_cpus_allowed_ptr(current, housekeeping_cpumask(HK_FLAG_DOMAIN)) < 0)
 		BUG();
 #ifdef CONFIG_SCHED_WALT
-	cpumask_copy(&current->wts.cpus_requested, cpu_possible_mask);
+	cpumask_copy(&current->cpus_requested, cpu_possible_mask);
 #endif
 	sched_init_granularity();
 
@@ -8554,14 +8553,13 @@ int set_task_boost(int boost, u64 period)
 	if (boost < TASK_BOOST_NONE || boost >= TASK_BOOST_END)
 		return -EINVAL;
 	if (boost) {
-		current->wts.boost = boost;
-		current->wts.boost_period = (u64)period * 1000 * 1000;
-		current->wts.boost_expires = sched_clock() +
-					current->wts.boost_period;
+		current->boost = boost;
+		current->boost_period = (u64)period * 1000 * 1000;
+		current->boost_expires = sched_clock() + current->boost_period;
 	} else {
-		current->wts.boost = 0;
-		current->wts.boost_expires = 0;
-		current->wts.boost_period = 0;
+		current->boost = 0;
+		current->boost_expires = 0;
+		current->boost_period = 0;
 	}
 	return 0;
 }

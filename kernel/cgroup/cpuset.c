@@ -1050,8 +1050,8 @@ static int update_cpus_allowed(struct cpuset *cs, struct task_struct *p,
 #ifdef CONFIG_SCHED_WALT
 	int ret;
 
-	if (cpumask_subset(&p->wts.cpus_requested, cs->cpus_requested)) {
-		ret = set_cpus_allowed_ptr(p, &p->wts.cpus_requested);
+	if (cpumask_subset(&p->cpus_requested, cs->cpus_requested)) {
+		ret = set_cpus_allowed_ptr(p, &p->cpus_requested);
 		if (!ret)
 			return ret;
 	}
