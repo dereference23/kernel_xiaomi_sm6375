@@ -55,27 +55,24 @@ extern unsigned int __weak sysctl_sched_ravg_window_nr_ticks;
 extern unsigned int __weak sysctl_sched_many_wakeup_threshold;
 extern unsigned int __weak sysctl_sched_dynamic_ravg_window_enable;
 
-extern int
+extern int __weak
 walt_proc_group_thresholds_handler(struct ctl_table *table, int write,
 			void __user *buffer, size_t *lenp,
 			loff_t *ppos);
-extern int
+extern int __weak
 walt_proc_user_hint_handler(struct ctl_table *table, int write,
 			void __user *buffer, size_t *lenp,
 			loff_t *ppos);
 
-extern int
+extern int __weak
 sched_updown_migrate_handler(struct ctl_table *table, int write,
 			void __user *buffer, size_t *lenp,
 			loff_t *ppos);
 
-extern int
+extern int __weak
 sched_ravg_window_handler(struct ctl_table *table, int write,
 			void __user *buffer, size_t *lenp,
 			loff_t *ppos);
-
-extern int sched_boost_handler(struct ctl_table *table, int write,
-			void __user *buffer, size_t *lenp, loff_t *ppos);
 #endif
 
 enum sched_tunable_scaling {
@@ -100,6 +97,10 @@ int sched_proc_update_handler(struct ctl_table *table, int write,
 		loff_t *ppos);
 #endif
 
+#ifdef CONFIG_SCHED_WALT
+extern int __weak sched_boost_handler(struct ctl_table *table, int write,
+			void __user *buffer, size_t *lenp, loff_t *ppos);
+#endif
 /*
  *  control realtime throttling:
  *
