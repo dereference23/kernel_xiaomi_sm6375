@@ -3923,26 +3923,20 @@ struct find_best_target_env {
 	int skip_cpu;
 };
 
-static inline bool prefer_spread_on_idle(int cpu, bool new_ilb)
+static inline bool prefer_spread_on_idle(int cpu)
 {
 #ifdef CONFIG_SCHED_WALT
-	switch (sysctl_sched_prefer_spread) {
-	case 1:
-		return is_min_capacity_cpu(cpu);
-	case 2:
-		return true;
-	case 3:
-		return (new_ilb && is_min_capacity_cpu(cpu));
-	case 4:
-		return new_ilb;
-	default:
+	if (likely(!sysctl_sched_prefer_spread))
 		return false;
-	}
+
+	if (is_min_capacity_cpu(cpu))
+		return sysctl_sched_prefer_spread >= 1;
+
+	return sysctl_sched_prefer_spread > 1;
 #else
 	return false;
 #endif
 }
-
 #ifdef CONFIG_SCHED_WALT
 static inline void walt_adjust_cpus_for_packing(struct task_struct *p,
 				int *target_cpu, int *best_idle_cpu,
@@ -3954,7 +3948,7 @@ static inline void walt_adjust_cpus_for_packing(struct task_struct *p,
 	if (*best_idle_cpu == -1 || *target_cpu == -1)
 		return;
 
-	if (prefer_spread_on_idle(*best_idle_cpu, false))
+	if (prefer_spread_on_idle(*best_idle_cpu))
 		fbt_env->need_idle |= 2;
 
 	if (task_rtg_high_prio(p) && walt_nr_rtg_high_prio(*target_cpu) > 0) {
@@ -10239,8 +10233,7 @@ static int load_balance(int this_cpu, struct rq *this_rq,
 
 #ifdef CONFIG_SCHED_WALT
 	env.prefer_spread = (idle != CPU_NOT_IDLE &&
-				prefer_spread_on_idle(this_cpu,
-				idle == CPU_NEWLY_IDLE) &&
+				prefer_spread_on_idle(this_cpu) &&
 				!((sd->flags & SD_ASYM_CPUCAPACITY) &&
 				 !cpumask_test_cpu(this_cpu,
 						 &asym_cap_sibling_cpus)));
@@ -10790,8 +10783,7 @@ static void rebalance_domains(struct rq *rq, enum cpu_idle_type idle)
 		max_cost += sd->max_newidle_lb_cost;
 
 #ifdef CONFIG_SCHED_WALT
-		if (!sd_overutilized(sd) && !prefer_spread_on_idle(cpu,
-					idle == CPU_NEWLY_IDLE))
+		if (!sd_overutilized(sd) && !prefer_spread_on_idle(cpu))
 			continue;
 #endif
 
@@ -11056,7 +11048,7 @@ static void nohz_balancer_kick(struct rq *rq)
 	 */
 	if (sched_energy_enabled()) {
 		if (rq->nr_running >= 2 && (cpu_overutilized(cpu) ||
-					prefer_spread_on_idle(cpu, false)))
+					prefer_spread_on_idle(cpu)))
 			flags = NOHZ_KICK_MASK;
 		goto out;
 	}
@@ -11465,7 +11457,7 @@ int newidle_balance(struct rq *this_rq, struct rq_flags *rf)
 	int pulled_task = 0;
 	u64 curr_cost = 0;
 	u64 avg_idle = this_rq->avg_idle;
-	bool prefer_spread = prefer_spread_on_idle(this_cpu, true);
+	bool prefer_spread = prefer_spread_on_idle(this_cpu);
 	bool force_lb = (!is_min_capacity_cpu(this_cpu) &&
 				silver_has_big_tasks() &&
 				(atomic_read(&this_rq->nr_iowait) == 0));
