@@ -1155,7 +1155,7 @@ TRACE_EVENT(sched_task_util,
 		__entry->rtg_skip_min           = rtg_skip_min;
 		__entry->start_cpu              = start_cpu;
 #ifdef CONFIG_SCHED_WALT
-		__entry->unfilter               = p->wts.unfilter;
+		__entry->unfilter               = p->unfilter;
 #else
 		__entry->unfilter               = 0;
 #endif
