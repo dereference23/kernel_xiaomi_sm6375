@@ -549,9 +549,9 @@ DECLARE_PER_CPU_READ_MOSTLY(int, sched_load_boost);
 
 #ifdef CONFIG_SCHED_WALT
 extern void sched_exit(struct task_struct *p);
-extern int
+extern int __weak
 register_cpu_cycle_counter_cb(struct cpu_cycle_counter_cb *cb);
-extern void
+extern void __weak
 sched_update_cpu_freq_min_max(const cpumask_t *cpus, u32 fmin, u32 fmax);
 extern void free_task_load_ptrs(struct task_struct *p);
 extern void sched_set_refresh_rate(enum fps fps);
