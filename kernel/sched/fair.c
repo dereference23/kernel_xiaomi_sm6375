@@ -7231,7 +7231,7 @@ fail:
 	rcu_read_unlock();
 
 eas_not_ready:
-	return -EPERM;
+	return -EINVAL;
 }
 #else
 int find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
@@ -7362,7 +7362,7 @@ unlock:
 	return prev_cpu;
 fail:
 	rcu_read_unlock();
-	return -EPERM;
+	return -EINVAL;
 }
 #endif
 /*
