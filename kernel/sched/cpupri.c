@@ -157,10 +157,8 @@ retry:
 		if (!lowest_mask || !fitness_fn)
 			return 1;
 
-#ifdef CONFIG_SCHED_WALT
 		cpumask_andnot(lowest_mask, lowest_mask,
 			       cpu_isolated_mask);
-#endif
 		if (drop_nopreempts)
 			drop_nopreempt_cpus(lowest_mask);
 
