@@ -2199,6 +2199,17 @@ unsigned long arch_scale_max_freq_capacity(struct sched_domain *sd, int cpu)
 
 unsigned long capacity_curr_of(int cpu);
 
+#ifdef CONFIG_SMP
+static inline unsigned long capacity_of(int cpu)
+{
+	return cpu_rq(cpu)->cpu_capacity;
+}
+
+static inline unsigned long capacity_orig_of(int cpu)
+{
+	return cpu_rq(cpu)->cpu_capacity_orig;
+}
+
 #ifdef CONFIG_SCHED_WALT
 static inline int per_task_boost(struct task_struct *p)
 {
@@ -2217,17 +2228,6 @@ static inline int per_task_boost(struct task_struct *p)
 	return 0;
 }
 #endif
-
-#ifdef CONFIG_SMP
-static inline unsigned long capacity_of(int cpu)
-{
-	return cpu_rq(cpu)->cpu_capacity;
-}
-
-static inline unsigned long capacity_orig_of(int cpu)
-{
-	return cpu_rq(cpu)->cpu_capacity_orig;
-}
 
 static inline unsigned long task_util(struct task_struct *p)
 {
