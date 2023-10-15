@@ -20,7 +20,6 @@
 #include <linux/percpu.h>
 #include <linux/sched.h>
 #include <linux/smp.h>
-#include <linux/sched.h>
 #include <trace/hooks/topology.h>
 
 DEFINE_PER_CPU(unsigned long, freq_scale) = SCHED_CAPACITY_SCALE;
@@ -225,7 +224,6 @@ init_cpu_capacity_callback(struct notifier_block *nb,
 
 	if (cpumask_empty(cpus_to_visit)) {
 		topology_normalize_cpu_scale();
-		walt_update_cluster_topology();
 		schedule_work(&update_topology_flags_work);
 		free_raw_capacity();
 		pr_debug("cpu_capacity: parsing done\n");
