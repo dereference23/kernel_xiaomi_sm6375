@@ -157,8 +157,6 @@ retry:
 		if (!lowest_mask || !fitness_fn)
 			return 1;
 
-		cpumask_andnot(lowest_mask, lowest_mask,
-			       cpu_isolated_mask);
 		if (drop_nopreempts)
 			drop_nopreempt_cpus(lowest_mask);
 
