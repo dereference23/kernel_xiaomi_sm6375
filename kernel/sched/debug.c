@@ -668,10 +668,10 @@ do {									\
 	P(cpu_capacity);
 #endif
 #ifdef CONFIG_SCHED_WALT
-	P(wrq.cluster->cur_freq);
-	P(wrq.walt_stats.nr_big_tasks);
+	P(cluster->cur_freq);
+	P(walt_stats.nr_big_tasks);
 	SEQ_printf(m, "  .%-30s: %llu\n", "walt_stats.cumulative_runnable_avg",
-			rq->wrq.walt_stats.cumulative_runnable_avg_scaled);
+			rq->walt_stats.cumulative_runnable_avg_scaled);
 #endif
 #undef P
 #undef PN
