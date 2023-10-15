@@ -6620,7 +6620,7 @@ static inline bool walt_target_ok(int target_cpu, int order_index)
 }
 
 static void walt_get_indicies(struct task_struct *p, int *order_index,
-		int *end_index, int task_boost, bool boosted)
+		int *end_index, int task_boost)
 {
 	int i = 0;
 
@@ -6643,7 +6643,8 @@ static void walt_get_indicies(struct task_struct *p, int *order_index,
 		return;
 	}
 
-	if (boosted || task_boost_policy(p) == SCHED_BOOST_ON_BIG ||
+	if (task_boost == TASK_BOOST_ON_MID ||
+		task_boost_policy(p) == SCHED_BOOST_ON_BIG ||
 		walt_task_skip_min_cpu(p))
 		*order_index = 1;
 
@@ -7142,7 +7143,7 @@ int find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
 	if (unlikely(!cpu_array))
 		goto eas_not_ready;
 
-	walt_get_indicies(p, &order_index, &end_index, task_boost, boosted);
+	walt_get_indicies(p, &order_index, &end_index, task_boost);
 	start_cpu = cpumask_first(&cpu_array[order_index][0]);
 
 	is_rtg = task_in_related_thread_group(p);
