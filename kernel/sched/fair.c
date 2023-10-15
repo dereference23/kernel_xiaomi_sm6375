@@ -4072,9 +4072,6 @@ place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int initial)
 			thresh >>= 1;
 
 		vruntime -= thresh;
-		if (entity_is_task(se) && per_task_boost(task_of(se)) ==
-				TASK_BOOST_STRICT_MAX)
-			vruntime -= sysctl_sched_latency;
 	}
 
 	/*
