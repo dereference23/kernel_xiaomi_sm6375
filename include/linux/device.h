@@ -1608,9 +1608,7 @@ extern void lock_device_hotplug(void);
 extern void unlock_device_hotplug(void);
 extern int lock_device_hotplug_sysfs(void);
 extern int trylock_device_hotplug(void);
-#ifdef CONFIG_SCHED_WALT
 extern void lock_device_hotplug_assert(void);
-#endif
 extern int device_offline(struct device *dev);
 extern int device_online(struct device *dev);
 extern void set_primary_fwnode(struct device *dev, struct fwnode_handle *fwnode);
