@@ -491,13 +491,6 @@ static inline void timer_set_idx(struct timer_list *timer, unsigned int idx)
  * Helper function to calculate the array index for a given expiry
  * time.
  */
-#ifndef CONFIG_SCHED_WALT
-static inline unsigned calc_index(unsigned expires, unsigned lvl)
-{
-	expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
-	return LVL_OFFS(lvl) + (expires & LVL_MASK);
-}
-#else
 static inline unsigned calc_index(unsigned expires, unsigned lvl)
 {
 	if (lvl != 0 && (expires & ~(UINT_MAX << LVL_SHIFT(lvl))))
@@ -507,7 +500,6 @@ static inline unsigned calc_index(unsigned expires, unsigned lvl)
 
 	return LVL_OFFS(lvl) + (expires & LVL_MASK);
 }
-#endif
 
 static int calc_wheel_index(unsigned long expires, unsigned long clk)
 {
