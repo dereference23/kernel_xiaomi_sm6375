@@ -126,12 +126,6 @@ int __weak arch_asym_cpu_priority(int cpu)
 unsigned int sysctl_sched_cfs_bandwidth_slice		= 5000UL;
 #endif
 
-/* Migration margins */
-unsigned int sched_capacity_margin_up[NR_CPUS] = {
-			[0 ... NR_CPUS-1] = 1078}; /* ~5% margin */
-unsigned int sched_capacity_margin_down[NR_CPUS] = {
-			[0 ... NR_CPUS-1] = 1205}; /* ~15% margin */
-
 unsigned int sched_small_task_threshold = 102;
 
 static inline void update_load_add(struct load_weight *lw, unsigned long inc)
@@ -3845,18 +3839,9 @@ done:
 	WRITE_ONCE(p->se.avg.util_est, ue);
 }
 
-static inline int task_fits_capacity(struct task_struct *p,
-					long capacity,
-					int cpu)
+static inline int task_fits_capacity(struct task_struct *p, long capacity)
 {
-	unsigned int margin;
-
-	if (capacity_orig_of(task_cpu(p)) > capacity_orig_of(cpu))
-		margin = sched_capacity_margin_down[task_cpu(p)];
-	else
-		margin = sched_capacity_margin_up[task_cpu(p)];
-
-	return capacity * 1024 > uclamp_task_util(p) * margin;
+	return fits_capacity(uclamp_task_util(p), capacity);
 }
 
 static inline void update_misfit_status(struct task_struct *p, struct rq *rq)
@@ -3869,7 +3854,7 @@ static inline void update_misfit_status(struct task_struct *p, struct rq *rq)
 		return;
 	}
 
-	if (task_fits_capacity(p, capacity_of(cpu_of(rq)), cpu_of(rq))) {
+	if (task_fits_capacity(p, capacity_of(cpu_of(rq)))) {
 		rq->misfit_task_load = 0;
 		return;
 	}
