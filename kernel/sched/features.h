@@ -90,8 +90,3 @@ SCHED_FEAT(WA_BIAS, true)
  */
 SCHED_FEAT(UTIL_EST, true)
 SCHED_FEAT(UTIL_EST_FASTUP, true)
-
-/*
- * Fast pre-selection of CPU candidates for EAS.
- */
-SCHED_FEAT(FIND_BEST_TARGET, true)
