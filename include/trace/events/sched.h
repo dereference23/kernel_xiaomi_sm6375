@@ -1109,11 +1109,11 @@ TRACE_EVENT(sched_task_util,
 	TP_PROTO(struct task_struct *p, unsigned long candidates,
 		int best_energy_cpu, bool sync, int need_idle, int fastpath,
 		bool placement_boost, u64 start_t,
-		bool uclamp_boosted, bool is_rtg, bool rtg_skip_min,
+		bool stune_boosted, bool is_rtg, bool rtg_skip_min,
 		int start_cpu),
 
 	TP_ARGS(p, candidates, best_energy_cpu, sync, need_idle, fastpath,
-		placement_boost, start_t, uclamp_boosted, is_rtg, rtg_skip_min,
+		placement_boost, start_t, stune_boosted, is_rtg, rtg_skip_min,
 		start_cpu),
 
 	TP_STRUCT__entry(
@@ -1129,7 +1129,7 @@ TRACE_EVENT(sched_task_util,
 		__field(int,            placement_boost)
 		__field(int,            rtg_cpu)
 		__field(u64,            latency)
-		__field(bool,           uclamp_boosted)
+		__field(bool,           stune_boosted)
 		__field(bool,           is_rtg)
 		__field(bool,           rtg_skip_min)
 		__field(int,            start_cpu)
@@ -1150,7 +1150,7 @@ TRACE_EVENT(sched_task_util,
 		__entry->fastpath               = fastpath;
 		__entry->placement_boost        = placement_boost;
 		__entry->latency                = (sched_clock() - start_t);
-		__entry->uclamp_boosted         = uclamp_boosted;
+		__entry->stune_boosted          = stune_boosted;
 		__entry->is_rtg                 = is_rtg;
 		__entry->rtg_skip_min           = rtg_skip_min;
 		__entry->start_cpu              = start_cpu;
@@ -1172,7 +1172,7 @@ TRACE_EVENT(sched_task_util,
 		__entry->pid, __entry->comm, __entry->util, __entry->prev_cpu,
 		__entry->candidates, __entry->best_energy_cpu, __entry->sync,
 		__entry->need_idle, __entry->fastpath, __entry->placement_boost,
-		__entry->latency, __entry->uclamp_boosted,
+		__entry->latency, __entry->stune_boosted,
 		__entry->is_rtg, __entry->rtg_skip_min, __entry->start_cpu,
 		__entry->unfilter, __entry->cpus_allowed, __entry->task_boost)
 )
@@ -1184,13 +1184,12 @@ TRACE_EVENT(sched_find_best_target,
 
 	TP_PROTO(struct task_struct *tsk,
 		 unsigned long min_util, int start_cpu,
-		 int best_idle, int most_spare_cap, int target,
-		 int order_index, int end_index,
-		 int skip, bool running),
+		 int best_idle, int best_active, int most_spare_cap,
+		 int target, int backup),
 
 	TP_ARGS(tsk, min_util, start_cpu,
-		best_idle, most_spare_cap, target,
-		order_index, end_index, skip, running),
+		best_idle, best_active, most_spare_cap,
+		target, backup),
 
 	TP_STRUCT__entry(
 		__array(char,		comm, TASK_COMM_LEN)
@@ -1198,12 +1197,10 @@ TRACE_EVENT(sched_find_best_target,
 		__field(unsigned long,	min_util)
 		__field(int,		start_cpu)
 		__field(int,		best_idle)
+		__field(int,		best_active)
 		__field(int,		most_spare_cap)
 		__field(int,		target)
-		__field(int,		order_index)
-		__field(int,		end_index)
-		__field(int,		skip)
-		__field(bool,		running)
+		__field(int,		backup)
 		),
 
 	TP_fast_assign(
@@ -1212,24 +1209,18 @@ TRACE_EVENT(sched_find_best_target,
 		__entry->min_util       = min_util;
 		__entry->start_cpu      = start_cpu;
 		__entry->best_idle      = best_idle;
+		__entry->best_active    = best_active;
 		__entry->most_spare_cap = most_spare_cap;
 		__entry->target         = target;
-		__entry->order_index    = order_index;
-		__entry->end_index      = end_index;
-		__entry->skip           = skip;
-		__entry->running        = running;
+		__entry->backup         = backup;
 		),
 
-	TP_printk("pid=%d comm=%s start_cpu=%d best_idle=%d most_spare_cap=%d target=%d order_index=%d end_index=%d skip=%d running=%d",
+	TP_printk("pid=%d comm=%s start_cpu=%d best_idle=%d best_active=%d most_spare_cap=%d target=%d backup=%d",
 		  __entry->pid, __entry->comm,
 		  __entry->start_cpu,
-		  __entry->best_idle,
+		  __entry->best_idle, __entry->best_active,
 		  __entry->most_spare_cap,
-		  __entry->target,
-		  __entry->order_index,
-		  __entry->end_index,
-		  __entry->skip,
-		  __entry->running)
+		  __entry->target, __entry->backup)
 );
 #endif /* CONFIG_SMP */
 
