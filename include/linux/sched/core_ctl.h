@@ -20,7 +20,7 @@ struct core_ctl_notif_data {
 
 struct notifier_block;
 
-#ifdef CONFIG_SCHED_WALT
+#if defined(CONFIG_SCHED_WALT) && defined(CONFIG_SCHED_WALT_ORIG)
 extern int core_ctl_set_boost(bool boost);
 extern void core_ctl_notifier_register(struct notifier_block *n);
 extern void core_ctl_notifier_unregister(struct notifier_block *n);
