@@ -3082,13 +3082,21 @@ static inline int same_freq_domain(int src_cpu, int dst_cpu)
 extern enum sched_boost_policy boost_policy;
 static inline enum sched_boost_policy sched_boost_policy(void)
 {
+#ifdef CONFIG_SCHED_WALT_ORIG
 	return boost_policy;
+#else
+	return SCHED_BOOST_NONE;
+#endif
 }
 
 extern unsigned int sched_boost_type;
 static inline int sched_boost(void)
 {
+#ifdef CONFIG_SCHED_WALT_ORIG
 	return sched_boost_type;
+#else
+	return NO_BOOST;
+#endif
 }
 
 static inline bool rt_boost_on_big(void)
@@ -3416,7 +3424,7 @@ extern struct task_struct *find_process_by_pid(pid_t pid);
 extern void enqueue_task_core(struct rq *rq, struct task_struct *p, int flags);
 extern void dequeue_task_core(struct rq *rq, struct task_struct *p, int flags);
 
-#if defined(CONFIG_SCHED_WALT) && defined(CONFIG_UCLAMP_TASK_GROUP)
+#if defined(CONFIG_SCHED_WALT_ORIG) && defined(CONFIG_SCHED_WALT) && defined(CONFIG_UCLAMP_TASK_GROUP)
 extern void walt_init_sched_boost(struct task_group *tg);
 #else
 static inline void walt_init_sched_boost(struct task_group *tg) {}
