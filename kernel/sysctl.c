@@ -146,8 +146,10 @@ static int six_hundred_forty_kb = 640 * 1024;
 #endif
 
 #ifdef CONFIG_SCHED_WALT
+#ifdef CONFIG_SCHED_WALT_ORIG
 static int neg_three = -3;
 static int three = 3;
+#endif
 static int fifty = 50;
 static int two_hundred_fifty_five = 255;
 const int sched_user_hint_max = 1000;
@@ -427,6 +429,7 @@ static struct ctl_table kern_table[] = {
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= &sysctl_sched_group_upmigrate_pct,
 	},
+#ifdef CONFIG_SCHED_WALT_ORIG
 	{
 		.procname	= "sched_boost",
 		.data		= &sysctl_sched_boost,
@@ -436,6 +439,7 @@ static struct ctl_table kern_table[] = {
 		.extra1		= &neg_three,
 		.extra2		= &three,
 	},
+#endif
 	{
 		.procname	= "sched_conservative_pl",
 		.data		= &sysctl_sched_conservative_pl,
