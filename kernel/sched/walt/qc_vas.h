@@ -37,7 +37,12 @@ extern int sched_set_group_id(struct task_struct *p, unsigned int group_id);
 extern unsigned int sched_get_group_id(struct task_struct *p);
 extern int sched_set_init_task_load(struct task_struct *p, int init_load_pct);
 extern u32 sched_get_init_task_load(struct task_struct *p);
+#ifdef CONFIG_SCHED_WALT_ORIG
 extern void core_ctl_check(u64 wallclock);
+#else
+extern void rotation_ctl_check(u64 wallclock);
+#define core_ctl_check rotation_ctl_check
+#endif
 extern int sched_set_boost(int enable);
 extern int sched_isolate_count(const cpumask_t *mask, bool include_offline);
 
