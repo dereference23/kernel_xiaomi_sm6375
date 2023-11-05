@@ -31,9 +31,6 @@
 #include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 #include <sound/soc.h>
-#ifdef CONFIG_WT_QGKI
-extern int smartpa_type;
-#endif
 #include "aw882xx.h"
 #include "aw_log.h"
 #include "aw_dsp.h"
@@ -2193,7 +2190,7 @@ static int aw882xx_i2c_probe(struct i2c_client *i2c,
 	if (aw882xx->chip_id == 0x2113) {
 		pr_info("%s audiock fsm detect device seccess\n",__func__);
 #ifdef CONFIG_WT_QGKI
-		smartpa_type =snd_soc_set_smartpa_type("aw882xx_i2c_probe",AW88261);
+		snd_soc_set_smartpa_type(__func__, AW88261);
 #endif
 	}
 
