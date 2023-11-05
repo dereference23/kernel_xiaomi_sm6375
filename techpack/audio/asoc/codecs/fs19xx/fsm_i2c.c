@@ -31,9 +31,6 @@ static struct device *g_fsm_pdev = NULL;
 #include "fsm_codec.c"
 #include <sound/soc.h>
 
-#ifdef CONFIG_WT_QGKI
-extern int smartpa_type;
-#endif
 void fsm_mutex_lock()
 {
 	mutex_lock(&g_fsm_mutex);
@@ -526,7 +523,7 @@ static int fsm_i2c_probe(struct i2c_client *i2c,
 	} else { //bug 682191, baoshulin@wingtech.com, 20210831, add mmitest and smartpa info
 		pr_info("%s audiock fsm detect device seccess\n",__func__);
 #ifdef CONFIG_WT_QGKI
-		smartpa_type =snd_soc_set_smartpa_type("fsm_i2c_probe",FS1962);
+		snd_soc_set_smartpa_type(__func__, FS1962);
 #endif
 	}
 	fsm_dev->id = cfg->dev_count - 1;
