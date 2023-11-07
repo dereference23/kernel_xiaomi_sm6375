@@ -1,3 +1,8 @@
+/*
+ * NOTE: This file has been modified by Sony Corporation.
+ * Modifications are Copyright 2021 Sony Corporation,
+ * and licensed under the license of the file.
+ */
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
@@ -29,7 +34,8 @@ const char *migrate_type_names[] = {"GROUP_TO_RQ", "RQ_TO_GROUP",
 #define WINDOW_STATS_MAX		1
 #define WINDOW_STATS_MAX_RECENT_AVG	2
 #define WINDOW_STATS_AVG		3
-#define WINDOW_STATS_INVALID_POLICY	4
+#define WINDOW_STATS_EWMA		4
+#define WINDOW_STATS_INVALID_POLICY	5
 
 #define MAX_NR_CLUSTERS			3
 
@@ -125,7 +131,7 @@ static cpumask_t asym_freq_match_cpus = CPU_MASK_NONE;
 static __read_mostly unsigned int sched_io_is_busy = 1;
 
 __read_mostly unsigned int sysctl_sched_window_stats_policy =
-	WINDOW_STATS_MAX_RECENT_AVG;
+	WINDOW_STATS_EWMA;
 
 unsigned int sysctl_sched_ravg_window_nr_ticks = (HZ / NR_WINDOWS_PER_SEC);
 
@@ -1852,7 +1858,7 @@ static void update_history(struct rq *rq, struct task_struct *p,
 	u32 *hist = &p->wts.sum_history[0];
 	int i;
 	u32 max = 0, avg, demand, pred_demand;
-	u64 sum = 0;
+	u64 sum = 0, ewma = 0, ewma_weight;
 	u16 demand_scaled, pred_demand_scaled;
 
 	/* Ignore windows where task had no activity */
@@ -1862,11 +1868,15 @@ static void update_history(struct rq *rq, struct task_struct *p,
 	/* Push new 'runtime' value onto stack */
 	for (; samples > 0; samples--) {
 		hist[p->wts.cidx] = runtime;
+		ewma_weight = RAVG_HIST_SIZE - p->wts.cidx - 1;
 		p->wts.cidx = ++(p->wts.cidx) & RAVG_HIST_MASK;
 	}
 
 	for (i = 0; i < RAVG_HIST_SIZE; i++) {
 		sum += hist[i];
+		ewma += hist[i] << ewma_weight;
+		ewma_weight = (ewma_weight + 1) & RAVG_HIST_MASK;
+
 		if (hist[i] > max)
 			max = hist[i];
 	}
@@ -1877,6 +1887,27 @@ static void update_history(struct rq *rq, struct task_struct *p,
 		demand = runtime;
 	} else if (sysctl_sched_window_stats_policy == WINDOW_STATS_MAX) {
 		demand = max;
+	} else if (sysctl_sched_window_stats_policy == WINDOW_STATS_EWMA) {
+		/*
+		 * WMA stands for weighted moving average. It helps to
+		 * smooth load curve and react faster while ramping down
+		 * comparing with basic average policy. When ramping up
+		 * it prevents from a spurious big "recent" sample that
+		 * may lead to overshooting if it is bigger than AVG of
+		 * history demand.
+		 *
+		 * See below example (4 HS):
+		 *
+		 * WMA = (P0 * 4 + P1 * 3 + P2 * 2 + P3 * 1) / (4 + 3 + 2 + 1)
+		 *
+		 * This is done for power saving. Means when load disappears
+		 * or becomes low, this algorithm caches a real bottom load
+		 * faster (because of weights) than taking AVG values.
+		 *
+		 * EWMA is an exponential version of the WMA algorithm.
+		 */
+		ewma = div64_u64(ewma, (1 << RAVG_HIST_SIZE) - 1);
+		demand = (u32) ewma;
 	} else {
 		avg = sum >> RAVG_HIST_SHIFT;
 		if (sysctl_sched_window_stats_policy == WINDOW_STATS_AVG)
