@@ -151,6 +151,7 @@ static int __maybe_unused max_kswapd_threads = MAX_KSWAPD_THREADS;
 static int neg_three = -3;
 static int three = 3;
 #endif
+static int five = 5;
 static int fifty = 50;
 static int two_hundred_fifty_five = 255;
 const int sched_user_hint_max = 1000;
@@ -411,7 +412,7 @@ static struct ctl_table kern_table[] = {
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
 		.extra1		= SYSCTL_ZERO,
-		.extra2		= &four,
+		.extra2		= &five,
 	},
 	{
 		.procname	= "sched_group_upmigrate",
