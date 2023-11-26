@@ -24,7 +24,10 @@
 #include <linux/version.h>
 
 #ifdef CONFIG_WT_QGKI
-#include <drm/drm_notifier.h>
+enum {
+	CHARGER_STATE_DISABLE,
+	CHARGER_STATE_ENABLE,
+};
 #endif
 #include "inc/tcpci_typec.h"
 
