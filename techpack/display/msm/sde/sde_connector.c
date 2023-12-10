@@ -2465,8 +2465,8 @@ static int sde_connector_atomic_check(struct drm_connector *connector,
 	return 0;
 }
 
-static void _sde_connector_report_panel_dead(struct sde_connector *conn,
-	bool skip_pre_kickoff)
+void _sde_connector_report_panel_dead(struct sde_connector *conn,
+				      bool skip_pre_kickoff)
 {
 	struct drm_event event;
 
