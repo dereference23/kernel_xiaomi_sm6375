@@ -1116,4 +1116,7 @@ int sde_connector_get_panel_vfp(struct drm_connector *connector,
  */
 int sde_connector_esd_status(struct drm_connector *connector);
 
+void _sde_connector_report_panel_dead(struct sde_connector *conn,
+				      bool skip_pre_kickoff);
+
 #endif /* _SDE_CONNECTOR_H_ */
