@@ -4270,6 +4270,7 @@ static int _sde_encoder_reset_ctl_hw(struct drm_encoder *drm_enc)
 void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error,
 		bool config_changed)
 {
+	static bool has_run;
 	struct dsi_display *display;
 	struct sde_connector *sde_conn;
 	struct sde_encoder_virt *sde_enc;
@@ -4315,6 +4316,11 @@ void sde_encoder_kickoff(struct drm_encoder *drm_enc, bool is_error,
 		phys = sde_enc->phys_encs[i];
 		if (phys && phys->ops.handle_post_kickoff)
 			phys->ops.handle_post_kickoff(phys);
+	}
+
+	if (unlikely(!has_run)) {
+		has_run = true;
+		_sde_connector_report_panel_dead(sde_conn, false);
 	}
 
 	SDE_ATRACE_END("encoder_kickoff");
