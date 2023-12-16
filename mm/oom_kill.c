@@ -317,10 +317,6 @@ static int oom_evaluate_task(struct task_struct *task, void *arg)
 {
 	struct oom_control *oc = arg;
 	long points;
-#ifdef CONFIG_PRIORITIZE_OOM_TASKS
-	struct task_struct *p;
-	short adj;
-#endif
 
 	if (oom_unkillable_task(task))
 		goto next;
@@ -340,18 +336,6 @@ static int oom_evaluate_task(struct task_struct *task, void *arg)
 			goto next;
 		goto abort;
 	}
-
-#ifdef CONFIG_PRIORITIZE_OOM_TASKS
-	p = find_lock_task_mm(task);
-	if (!p)
-		goto next;
-
-	adj = p->signal->oom_score_adj;
-	task_unlock(p);
-
-	if (adj < oc->min_kill_adj)
-		goto next;
-#endif
 
 	/*
 	 * If task is allocating a lot of memory and has been marked to be
@@ -1021,11 +1005,7 @@ static void oom_kill_process(struct oom_control *oc, const char *message)
 	}
 	task_unlock(victim);
 
-	if (__ratelimit(&oom_rs)
-#ifdef CONFIG_PRIORITIZE_OOM_TASKS
-	    && oc->min_kill_adj < CONFIG_OOM_TASK_PRIORITY_ADJ_LIMIT
-#endif
-	   )
+	if (__ratelimit(&oom_rs))
 		dump_header(oc, victim);
 
 	/*
@@ -1108,9 +1088,6 @@ bool out_of_memory(struct oom_control *oc)
 		return true;
 	}
 
-#ifdef CONFIG_PRIORITIZE_OOM_TASKS
-	oc->min_kill_adj = OOM_SCORE_ADJ_MIN;
-#endif
 	if (!is_memcg_oom(oc)) {
 		blocking_notifier_call_chain(&oom_notify_list, 0, &freed);
 		if (freed > 0)
@@ -1146,39 +1123,19 @@ bool out_of_memory(struct oom_control *oc)
 	oc->constraint = constrained_alloc(oc);
 	if (oc->constraint != CONSTRAINT_MEMORY_POLICY)
 		oc->nodemask = NULL;
+	check_panic_on_oom(oc);
 
 	if (!is_memcg_oom(oc) && sysctl_oom_kill_allocating_task &&
 	    current->mm && !oom_unkillable_task(current) &&
 	    oom_cpuset_eligible(current, oc) &&
 	    current->signal->oom_score_adj != OOM_SCORE_ADJ_MIN) {
-		check_panic_on_oom(oc);
 		get_task_struct(current);
 		oc->chosen = current;
 		oom_kill_process(oc, "Out of memory (oom_kill_allocating_task)");
 		return true;
 	}
 
-#ifdef CONFIG_PRIORITIZE_OOM_TASKS
-	if (oc->min_kill_adj < CONFIG_OOM_TASK_PRIORITY_ADJ_LIMIT) {
-		short prev_min_kill_adj = oc->min_kill_adj;
-
-		oc->min_kill_adj = CONFIG_OOM_TASK_PRIORITY_ADJ_LIMIT;
-		select_bad_process(oc);
-		if (!oc->chosen) {
-			pr_warn_ratelimited("Could not find task with adj >= %d\n",
-					CONFIG_OOM_TASK_PRIORITY_ADJ_LIMIT);
-			oc->min_kill_adj = prev_min_kill_adj;
-			oc->chosen_points = 0;
-		}
-
-	}
-#endif
-
-	if (!oc->chosen) {
-		check_panic_on_oom(oc);
-		select_bad_process(oc);
-	}
-
+	select_bad_process(oc);
 	/* Found nothing?!?! */
 	if (!oc->chosen) {
 		dump_header(oc, NULL);
