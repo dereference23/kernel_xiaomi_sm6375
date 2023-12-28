@@ -155,17 +155,6 @@ static void page_cache_delete(struct address_space *mapping,
 	mapping->nrpages -= nr;
 }
 
-#ifdef CONFIG_VM_EVENT_COUNT_CLEAN_PAGE_RECLAIM
-static void count_vm_event_clean_page_put(void)
-{
-	count_vm_event(PGPGOUTCLEAN);
-}
-#else
-static void count_vm_event_clean_page_put(void)
-{
-}
-#endif
-
 static void unaccount_page_cache_page(struct address_space *mapping,
 				      struct page *page)
 {
@@ -176,12 +165,10 @@ static void unaccount_page_cache_page(struct address_space *mapping,
 	 * invalidate any existing cleancache entries.  We can't leave
 	 * stale data around in the cleancache once our page is gone
 	 */
-	if (PageUptodate(page) && PageMappedToDisk(page)) {
-		count_vm_event_clean_page_put();
+	if (PageUptodate(page) && PageMappedToDisk(page))
 		cleancache_put_page(page);
-	} else {
+	else
 		cleancache_invalidate_page(mapping, page);
-	}
 
 	VM_BUG_ON_PAGE(PageTail(page), page);
 	VM_BUG_ON_PAGE(page_mapped(page), page);
