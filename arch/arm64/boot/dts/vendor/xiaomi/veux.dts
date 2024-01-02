@@ -24,6 +24,7 @@
 };
 
 &qcom {
+	/delete-property/ mem-type;
 	console-size = <0x100000>;
 	pmsg-size = <0x100000>;
 };
