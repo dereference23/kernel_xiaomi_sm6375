@@ -967,6 +967,13 @@ int dsi_connector_get_modes(struct drm_connector *connector, void *data,
 	edid.width_cm = (connector->display_info.width_mm) / 10;
 	edid.height_cm = (connector->display_info.height_mm) / 10;
 
+#ifdef CONFIG_WT_QGKI
+	if (connector->display_info.height_mm > 1000) {
+		edid.width_cm = (connector->display_info.width_mm) / 100;
+		edid.height_cm = (connector->display_info.height_mm) / 100;
+	}
+#endif
+
 	dsi_drm_update_dtd(&edid, modes, count);
 	dsi_drm_update_checksum(&edid);
 	rc =  drm_connector_update_edid_property(connector, &edid);
