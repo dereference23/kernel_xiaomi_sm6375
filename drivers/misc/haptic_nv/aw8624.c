@@ -2608,7 +2608,7 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 	unsigned int val = 0;
 	unsigned int f0_trace_parameter[4];
 	unsigned int bemf_config[4];
-	unsigned int rtp_time[175];
+	unsigned int rtp_time[256];
 	//unsigned int trig_config[15];
 	struct qti_hap_config *config = &aw8624->config;
 	struct device_node *child_node;
@@ -2720,6 +2720,11 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 				 &aw8624->info.effect_max);
 	if (val != 0)
 		pr_err("%s: vib_effect_max not found\n", __func__);
+	else if (aw8624->info.effect_max > 255) {
+		aw8624->info.effect_max = 255;
+		pr_err("vib_effect_max is too large, limiting to %d\n", aw8624->info.effect_max);
+	}
+
 	val = of_property_read_u32(np, "vib_func_parameter1",
 				   &aw8624->info.parameter1);
 	if (val != 0)
@@ -2738,6 +2743,10 @@ static int aw8624_parse_dt(struct device *dev, struct aw8624 *aw8624,
 		return -ENOMEM;
 
 	tmp = of_get_available_child_count(np);
+	if (tmp > aw8624->info.effect_id_boundary) {
+		tmp = aw8624->info.effect_id_boundary;
+		pr_err("vib_effect_id_boundary is too small, limiting predefined effects to %d\n", tmp);
+	}
 	aw8624->predefined = devm_kcalloc(aw8624->dev, tmp,
 					  sizeof(*aw8624->predefined),
 					  GFP_KERNEL);
