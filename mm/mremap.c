@@ -210,11 +210,7 @@ static void move_ptes(struct vm_area_struct *vma, pmd_t *old_pmd,
 		drop_rmap_locks(vma);
 }
 
-/*
- * Speculative page fault handlers will not detect page table changes done
- * without ptl locking.
- */
-#if defined(CONFIG_HAVE_MOVE_PMD) && !defined(CONFIG_SPECULATIVE_PAGE_FAULT)
+#ifdef CONFIG_HAVE_MOVE_PMD
 static bool move_normal_pmd(struct vm_area_struct *vma, unsigned long old_addr,
 		  unsigned long new_addr, unsigned long old_end,
 		  pmd_t *old_pmd, pmd_t *new_pmd)
