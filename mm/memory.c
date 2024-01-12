@@ -4506,8 +4506,9 @@ int __handle_speculative_fault(struct mm_struct *mm, unsigned long address,
 	pol = __get_vma_policy(vmf.vma, address);
 	if (!pol)
 		pol = get_task_policy(current);
-	if (pol && pol->mode == MPOL_INTERLEAVE)
-		return VM_FAULT_RETRY;
+	if (!pol)
+		if (pol && pol->mode == MPOL_INTERLEAVE)
+			return VM_FAULT_RETRY;
 #endif
 
 	/*
