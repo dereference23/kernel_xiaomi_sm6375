@@ -464,8 +464,6 @@ struct vm_fault {
 					 * page table to avoid allocation from
 					 * atomic context.
 					 */
-	unsigned long vma_flags;	/* Speculative Page Fault field */
-	pgprot_t vma_page_prot;		/* Speculative Page Fault field */
 	ANDROID_VENDOR_DATA(1);
 	ANDROID_VENDOR_DATA(2);
 };
