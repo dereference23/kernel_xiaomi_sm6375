@@ -85,6 +85,9 @@
 
 #include "internal.h"
 
+#define CREATE_TRACE_POINTS
+#include <trace/events/pagefault.h>
+
 #if defined(LAST_CPUPID_NOT_IN_PAGE_FLAGS) && !defined(CONFIG_COMPILE_TEST)
 #warning Unfortunate NUMA and NUMA Balancing config, growing page-frame for last_cpupid.
 #endif
@@ -2236,8 +2239,10 @@ static bool pte_spinlock(struct vm_fault *vmf)
 	}
 
 	local_irq_disable();
-	if (vma_has_changed(vmf))
+	if (vma_has_changed(vmf)) {
+		trace_spf_vma_changed(_RET_IP_, vmf->vma, vmf->address);
 		goto out;
+	}
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 	/*
@@ -2245,16 +2250,21 @@ static bool pte_spinlock(struct vm_fault *vmf)
 	 * is not a huge collapse operation in progress in our back.
 	 */
 	pmdval = READ_ONCE(*vmf->pmd);
-	if (!pmd_same(pmdval, vmf->orig_pmd))
+	if (!pmd_same(pmdval, vmf->orig_pmd)) {
+		trace_spf_pmd_changed(_RET_IP_, vmf->vma, vmf->address);
 		goto out;
+	}
 #endif
 
 	vmf->ptl = pte_lockptr(vmf->vma->vm_mm, vmf->pmd);
-	if (unlikely(!spin_trylock(vmf->ptl)))
+	if (unlikely(!spin_trylock(vmf->ptl))) {
+		trace_spf_pte_lock(_RET_IP_, vmf->vma, vmf->address);
 		goto out;
+	}
 
 	if (vma_has_changed(vmf)) {
 		spin_unlock(vmf->ptl);
+		trace_spf_vma_changed(_RET_IP_, vmf->vma, vmf->address);
 		goto out;
 	}
 
@@ -2287,8 +2297,10 @@ static bool pte_map_lock(struct vm_fault *vmf)
 	 * block on the PTL and thus we're safe.
 	 */
 	local_irq_disable();
-	if (vma_has_changed(vmf))
+	if (vma_has_changed(vmf)) {
+		trace_spf_vma_changed(_RET_IP_, vmf->vma, vmf->address);
 		goto out;
+	}
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 	/*
@@ -2296,8 +2308,10 @@ static bool pte_map_lock(struct vm_fault *vmf)
 	 * is not a huge collapse operation in progress in our back.
 	 */
 	pmdval = READ_ONCE(*vmf->pmd);
-	if (!pmd_same(pmdval, vmf->orig_pmd))
+	if (!pmd_same(pmdval, vmf->orig_pmd)) {
+		trace_spf_pmd_changed(_RET_IP_, vmf->vma, vmf->address);
 		goto out;
+	}
 #endif
 
 	/*
@@ -2311,11 +2325,13 @@ static bool pte_map_lock(struct vm_fault *vmf)
 	pte = pte_offset_map(vmf->pmd, vmf->address);
 	if (unlikely(!spin_trylock(ptl))) {
 		pte_unmap(pte);
+		trace_spf_pte_lock(_RET_IP_, vmf->vma, vmf->address);
 		goto out;
 	}
 
 	if (vma_has_changed(vmf)) {
 		pte_unmap_unlock(pte, ptl);
+		trace_spf_vma_changed(_RET_IP_, vmf->vma, vmf->address);
 		goto out;
 	}
 
@@ -4450,35 +4466,45 @@ int __handle_speculative_fault(struct mm_struct *mm, unsigned long address,
 
 	/* rmb <-> seqlock,vma_rb_erase() */
 	seq = raw_read_seqcount(&vmf.vma->vm_sequence);
-	if (seq & 1)
+	if (seq & 1) {
+		trace_spf_vma_changed(_RET_IP_, vmf.vma, address);
 		return VM_FAULT_RETRY;
+	}
 
 	/*
 	 * __anon_vma_prepare() requires the mmap_sem to be held
 	 * because vm_next and vm_prev must be safe. This can't be guaranteed
 	 * in the speculative path.
 	 */
-	if (unlikely(vma_is_anonymous(vmf.vma) && !vmf.vma->anon_vma))
+	if (unlikely(vma_is_anonymous(vmf.vma) && !vmf.vma->anon_vma)) {
+		trace_spf_vma_notsup(_RET_IP_, vmf.vma, address);
 		return VM_FAULT_RETRY;
+	}
 
 	vmf.vma_flags = READ_ONCE(vmf.vma->vm_flags);
 	vmf.vma_page_prot = READ_ONCE(vmf.vma->vm_page_prot);
 
 	/* Can't call userland page fault handler in the speculative path */
-	if (unlikely(vmf.vma_flags & VM_UFFD_MISSING))
+	if (unlikely(vmf.vma_flags & VM_UFFD_MISSING)) {
+		trace_spf_vma_notsup(_RET_IP_, vmf.vma, address);
 		return VM_FAULT_RETRY;
+	}
 
-	if (vmf.vma_flags & VM_GROWSDOWN || vmf.vma_flags & VM_GROWSUP)
+	if (vmf.vma_flags & VM_GROWSDOWN || vmf.vma_flags & VM_GROWSUP) {
 		/*
 		 * This could be detected by the check address against VMA's
 		 * boundaries but we want to trace it as not supported instead
 		 * of changed.
 		 */
+		trace_spf_vma_notsup(_RET_IP_, vmf.vma, address);
 		return VM_FAULT_RETRY;
+	}
 
 	if (address < READ_ONCE(vmf.vma->vm_start)
-	    || READ_ONCE(vmf.vma->vm_end) <= address)
+	    || READ_ONCE(vmf.vma->vm_end) <= address) {
+		trace_spf_vma_changed(_RET_IP_, vmf.vma, address);
 		return VM_FAULT_RETRY;
+	}
 
 	if (!arch_vma_access_permitted(vmf.vma, flags & FAULT_FLAG_WRITE,
 				       flags & FAULT_FLAG_INSTRUCTION,
@@ -4504,8 +4530,10 @@ int __handle_speculative_fault(struct mm_struct *mm, unsigned long address,
 	if (!pol)
 		pol = get_task_policy(current);
 	if (!pol)
-		if (pol && pol->mode == MPOL_INTERLEAVE)
+		if (pol && pol->mode == MPOL_INTERLEAVE) {
+			trace_spf_vma_notsup(_RET_IP_, vmf.vma, address);
 			return VM_FAULT_RETRY;
+		}
 #endif
 
 	/*
@@ -4577,8 +4605,10 @@ int __handle_speculative_fault(struct mm_struct *mm, unsigned long address,
 	 * We need to re-validate the VMA after checking the bounds, otherwise
 	 * we might have a false positive on the bounds.
 	 */
-	if (read_seqcount_retry(&vmf.vma->vm_sequence, seq))
+	if (read_seqcount_retry(&vmf.vma->vm_sequence, seq)) {
+		trace_spf_vma_changed(_RET_IP_, vmf.vma, address);
 		return VM_FAULT_RETRY;
+	}
 
 	mem_cgroup_enter_user_fault();
 	ret = handle_pte_fault(&vmf);
@@ -4607,10 +4637,12 @@ int __handle_speculative_fault(struct mm_struct *mm, unsigned long address,
 	return ret;
 
 out_walk:
+	trace_spf_vma_notsup(_RET_IP_, vmf.vma, address);
 	local_irq_enable();
 	return VM_FAULT_RETRY;
 
 out_segv:
+	trace_spf_vma_access(_RET_IP_, vmf.vma, address);
 	/*
 	 * We don't return VM_FAULT_RETRY so the caller is not expected to
 	 * retrieve the fetched VMA.
