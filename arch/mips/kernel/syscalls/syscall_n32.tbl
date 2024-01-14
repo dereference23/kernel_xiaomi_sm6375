@@ -378,5 +378,5 @@
 # 437 reserved for openat2
 # 438 reserved for pidfd_getfd
 # 439 reserved for faccessat2
-440	n32	process_madvise			sys_process_madvise
+# 440 reserved for process_madvise
 441	n32	epoll_pwait2			compat_sys_epoll_pwait2
