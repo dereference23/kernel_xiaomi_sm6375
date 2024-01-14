@@ -804,17 +804,3 @@ config ARCH_HAS_HUGEPD
 	bool
 
 endmenu
-
-config PROCESS_RECLAIM
-	bool "Enable process reclaim"
-	depends on PROC_FS
-	depends on QGKI
-	default y
-	help
-	 It allows to reclaim pages of the process by /proc/pid/reclaim.
-
-	 (echo file > /proc/PID/reclaim) reclaims file-backed pages only.
-	 (echo anon > /proc/PID/reclaim) reclaims anonymous pages only.
-	 (echo all > /proc/PID/reclaim) reclaims all pages.
-
-	 Any other value is ignored.
