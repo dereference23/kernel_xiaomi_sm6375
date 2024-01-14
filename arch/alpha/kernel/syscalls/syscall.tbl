@@ -475,4 +475,3 @@
 543	common	fspick				sys_fspick
 544	common	pidfd_open			sys_pidfd_open
 # 545 reserved for clone3
-546	common	process_madvise			sys_process_madvise
