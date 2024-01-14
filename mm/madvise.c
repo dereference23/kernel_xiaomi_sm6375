@@ -1278,7 +1278,8 @@ SYSCALL_DEFINE6(process_madvise, int, which, pid_t, upid,
 		goto put_pid;
 	}
 
-	if (!process_madvise_behavior_valid(behavior)) {
+	if (task->mm != current->mm &&
+			!process_madvise_behavior_valid(behavior)) {
 		ret = -EINVAL;
 		goto release_task;
 	}
