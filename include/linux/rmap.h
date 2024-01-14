@@ -14,8 +14,7 @@
 
 extern int isolate_lru_page(struct page *page);
 extern void putback_lru_page(struct page *page);
-extern unsigned long reclaim_pages_from_list(struct list_head *page_list,
-					     struct vm_area_struct *vma);
+extern unsigned long reclaim_pages_from_list(struct list_head *page_list);
 
 /*
  * The anon_vma heads a list of private "related" vmas, to scan if
@@ -219,8 +218,7 @@ static inline void page_dup_rmap(struct page *page, bool compound)
 int page_referenced(struct page *, int is_locked,
 			struct mem_cgroup *memcg, unsigned long *vm_flags);
 
-bool try_to_unmap(struct page *page, enum ttu_flags flags,
-				struct vm_area_struct *vma);
+bool try_to_unmap(struct page *, enum ttu_flags flags);
 
 /* Avoid racy checks */
 #define PVMW_SYNC		(1 << 0)
@@ -284,7 +282,6 @@ int page_mapped_in_vma(struct page *page, struct vm_area_struct *vma);
  */
 struct rmap_walk_control {
 	void *arg;
-	struct vm_area_struct *target_vma;
 	bool try_lock;
 	bool contended;
 	/*
@@ -323,7 +320,7 @@ static inline int page_referenced(struct page *page, int is_locked,
 	return 0;
 }
 
-#define try_to_unmap(page, refs, vma) false
+#define try_to_unmap(page, refs) false
 
 static inline int page_mkclean(struct page *page)
 {
