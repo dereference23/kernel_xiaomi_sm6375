@@ -22,14 +22,12 @@
 #include <linux/file.h>
 #include <linux/blkdev.h>
 #include <linux/backing-dev.h>
-#include <linux/compat.h>
 #include <linux/pagewalk.h>
 #include <linux/swap.h>
 #include <linux/swapops.h>
 #include <linux/shmem_fs.h>
 #include <linux/mmu_notifier.h>
 #include <linux/sched/mm.h>
-#include <linux/uio.h>
 
 #include <asm/tlb.h>
 
@@ -259,7 +257,6 @@ static long madvise_willneed(struct vm_area_struct *vma,
 			     struct vm_area_struct **prev,
 			     unsigned long start, unsigned long end)
 {
-	struct mm_struct *mm = vma->vm_mm;
 	struct file *file = vma->vm_file;
 	loff_t offset;
 
@@ -296,10 +293,10 @@ static long madvise_willneed(struct vm_area_struct *vma,
 	get_file(file);
 	offset = (loff_t)(start - vma->vm_start)
 			+ ((loff_t)vma->vm_pgoff << PAGE_SHIFT);
-	up_read(&mm->mmap_sem);
+	up_read(&current->mm->mmap_sem);
 	vfs_fadvise(file, offset, end - start, POSIX_FADV_WILLNEED);
 	fput(file);
-	down_read(&mm->mmap_sem);
+	down_read(&current->mm->mmap_sem);
 	return 0;
 }
 
@@ -691,6 +688,7 @@ out:
 	if (nr_swap) {
 		if (current->mm == mm)
 			sync_mm_rss(mm);
+
 		add_mm_counter(mm, MM_SWAPENTS, nr_swap);
 	}
 	arch_leave_lazy_mmu_mode();
@@ -770,8 +768,6 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
 				  unsigned long start, unsigned long end,
 				  int behavior)
 {
-	struct mm_struct *mm = vma->vm_mm;
-
 	*prev = vma;
 	if (!can_madv_lru_vma(vma))
 		return -EINVAL;
@@ -779,8 +775,8 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
 	if (!userfaultfd_remove(vma, start, end)) {
 		*prev = NULL; /* mmap_sem has been dropped, prev is stale */
 
-		down_read(&mm->mmap_sem);
-		vma = find_vma(mm, start);
+		down_read(&current->mm->mmap_sem);
+		vma = find_vma(current->mm, start);
 		if (!vma)
 			return -ENOMEM;
 		if (start < vma->vm_start) {
@@ -834,7 +830,6 @@ static long madvise_remove(struct vm_area_struct *vma,
 	loff_t offset;
 	int error;
 	struct file *f;
-	struct mm_struct *mm = vma->vm_mm;
 
 	*prev = NULL;	/* tell sys_madvise we drop mmap_sem */
 
@@ -862,13 +857,13 @@ static long madvise_remove(struct vm_area_struct *vma,
 	get_file(f);
 	if (userfaultfd_remove(vma, start, end)) {
 		/* mmap_sem was not released by userfaultfd_remove() */
-		up_read(&mm->mmap_sem);
+		up_read(&current->mm->mmap_sem);
 	}
 	error = vfs_fallocate(f,
 				FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
 				offset, end - start);
 	fput(f);
-	down_read(&mm->mmap_sem);
+	down_read(&current->mm->mmap_sem);
 	return error;
 }
 
@@ -1061,8 +1056,7 @@ madvise_behavior_valid(int behavior)
  *  -EBADF  - map exists, but area maps something that isn't a file.
  *  -EAGAIN - a kernel resource was temporarily unavailable.
  */
-int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
-		unsigned long start, size_t len_in, int behavior)
+int do_madvise(unsigned long start, size_t len_in, int behavior)
 {
 	unsigned long end, tmp;
 	struct vm_area_struct *vma, *prev;
@@ -1100,7 +1094,7 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
 
 	write = madvise_need_mmap_write(behavior);
 	if (write) {
-		if (down_write_killable(&mm->mmap_sem))
+		if (down_write_killable(&current->mm->mmap_sem))
 			return -EINTR;
 
 		/*
@@ -1115,12 +1109,12 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
 		 * but for now we have the mmget_still_valid()
 		 * model.
 		 */
-		if (!mmget_still_valid(mm)) {
-			up_write(&mm->mmap_sem);
+		if (!mmget_still_valid(current->mm)) {
+			up_write(&current->mm->mmap_sem);
 			return -EINTR;
 		}
 	} else {
-		down_read(&mm->mmap_sem);
+		down_read(&current->mm->mmap_sem);
 	}
 
 	/*
@@ -1128,7 +1122,7 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
 	 * ranges, just ignore them, but return -ENOMEM at the end.
 	 * - different from the way of handling in mlock etc.
 	 */
-	vma = find_vma_prev(mm, start, &prev);
+	vma = find_vma_prev(current->mm, start, &prev);
 	if (vma && start > vma->vm_start)
 		prev = vma;
 
@@ -1165,19 +1159,19 @@ int do_madvise(struct task_struct *target_task, struct mm_struct *mm,
 		if (prev)
 			vma = prev->vm_next;
 		else	/* madvise_remove dropped mmap_sem */
-			vma = find_vma(mm, start);
+			vma = find_vma(current->mm, start);
 	}
 out:
 	blk_finish_plug(&plug);
 	if (write)
-		up_write(&mm->mmap_sem);
+		up_write(&current->mm->mmap_sem);
 	else
-		up_read(&mm->mmap_sem);
+		up_read(&current->mm->mmap_sem);
 
 	return error;
 }
 
 SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
 {
-	return do_madvise(current, current->mm, start, len_in, behavior);
+	return do_madvise(start, len_in, behavior);
 }
