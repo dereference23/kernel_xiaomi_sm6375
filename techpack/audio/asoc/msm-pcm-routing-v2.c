@@ -41943,7 +41943,6 @@ static const struct snd_soc_dapm_route intercon_mi2s[] = {
 	{"PRI_MI2S_UL_HL", NULL, "PRI_MI2S_TX"},
 	{"SEC_MI2S_UL_HL", NULL, "SEC_MI2S_TX"},
 	{"SEC_MI2S_RX", NULL, "SEC_MI2S_DL_HL"},
-	{"SEC_MI2S_DL_HL", NULL, "SEC_MI2S_TX"},
 	{"PRI_MI2S_RX", NULL, "PRI_MI2S_DL_HL"},
 	{"TERT_MI2S_RX", NULL, "TERT_MI2S_DL_HL"},
 	{"QUAT_MI2S_UL_HL", NULL, "QUAT_MI2S_TX"},
