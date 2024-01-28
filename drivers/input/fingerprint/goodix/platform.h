@@ -80,7 +80,6 @@ int gf_parse_dts(struct gf_dev *gf_dev)
 
 
 err_pwr:
-	devm_gpio_free(dev, gf_dev->irq_gpio);
 	return 0;
 }
 
