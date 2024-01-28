@@ -4134,7 +4134,8 @@ int aw_send_afe_cal_apr(uint32_t param_id, void *buf, int cmd_size, bool write)
 		goto err;
 	}
 	/* Pack message header with data */
-	param_hdr.module_id = AFE_MODULE_ID_AWDSP_RX;
+	if (param_id != AFE_PARAM_ID_AWDSP_TX_SET_ENABLE)
+		param_hdr.module_id = AFE_MODULE_ID_AWDSP_RX;
 	param_hdr.instance_id = INSTANCE_ID_0;
 	param_hdr.param_id = param_id;
 	param_hdr.param_size = cmd_size;
