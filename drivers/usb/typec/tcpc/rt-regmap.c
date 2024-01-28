@@ -1624,10 +1624,12 @@ void regmap_plat_exit(void)
 #endif /* CONFIG_DEBUG_FS */
 }
 
+/*
 MODULE_DESCRIPTION("Richtek regmap Driver");
 MODULE_AUTHOR("Jeff Chang <jeff_chang@richtek.com>");
 MODULE_VERSION(RT_REGMAP_VERSION);
 MODULE_LICENSE("GPL");
+*/
 
 /* Release Note
  * 1.2.1
