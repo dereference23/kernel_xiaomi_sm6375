@@ -670,15 +670,16 @@ static int __init populate_rootfs(void)
 	char *err = unpack_to_rootfs(__initramfs_start, __initramfs_size);
 #else
 	bool is_normal_boot = strstr(saved_command_line, "androidboot.force_normal_boot=1");
+	bool ignore_builtin = strstr(saved_command_line, "ignore_builtin_recovery");
 	char *err = 0;
-	if (!is_normal_boot)
+	if (!is_normal_boot && !ignore_builtin)
 		err = unpack_to_rootfs(__initramfs_start, __initramfs_size);
 #endif
 	if (err)
 		panic("%s", err); /* Failed to decompress INTERNAL initramfs */
 
 #ifdef CONFIG_INITRAMFS_FORCE_RECOVERY
-	if (!is_normal_boot)
+	if (!is_normal_boot && !ignore_builtin)
 		goto done;
 #endif
 
