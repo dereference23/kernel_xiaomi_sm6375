@@ -32,6 +32,13 @@ config INITRAMFS_FORCE
 	  and is useful if you cannot or don't want to change the image
 	  your bootloader passes to the kernel.
 
+config INITRAMFS_FORCE_RECOVERY
+	bool "Force built-in initramfs in recovery mode"
+	depends on ANDROID && !INITRAMFS_FORCE && INITRAMFS_SOURCE!=""
+	help
+	  This option causes the kernel to ignore the initramfs image
+	  passed to it by the bootloader when booted to recovery mode.
+
 config INITRAMFS_ROOT_UID
 	int "User ID to map to 0 (user root)"
 	depends on INITRAMFS_SOURCE!=""
