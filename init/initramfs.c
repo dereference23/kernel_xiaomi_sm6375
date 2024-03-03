@@ -666,9 +666,21 @@ static void __init populate_initrd_image(char *err)
 static int __init populate_rootfs(void)
 {
 	/* Load the built in initramfs */
+#ifndef CONFIG_INITRAMFS_FORCE_RECOVERY
 	char *err = unpack_to_rootfs(__initramfs_start, __initramfs_size);
+#else
+	bool is_normal_boot = strstr(saved_command_line, "androidboot.force_normal_boot=1");
+	char *err = 0;
+	if (!is_normal_boot)
+		err = unpack_to_rootfs(__initramfs_start, __initramfs_size);
+#endif
 	if (err)
 		panic("%s", err); /* Failed to decompress INTERNAL initramfs */
+
+#ifdef CONFIG_INITRAMFS_FORCE_RECOVERY
+	if (!is_normal_boot)
+		goto done;
+#endif
 
 	if (!initrd_start || IS_ENABLED(CONFIG_INITRAMFS_FORCE))
 		goto done;
