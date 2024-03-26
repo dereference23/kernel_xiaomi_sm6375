@@ -321,6 +321,7 @@ static int max31760_suspend(struct device *dev)
 
 static int max31760_resume(struct device *dev)
 {
+	int ignore;
 	struct max31760_data *pdata = dev_get_drvdata(dev);
 
 	dev_dbg(dev, "enter resume now\n");
@@ -328,7 +329,7 @@ static int max31760_resume(struct device *dev)
 		atomic_set(&pdata->in_suspend, 0);
 		mutex_lock(&pdata->update_lock);
 		max31760_enable_gpio(pdata, 1);
-		regulator_enable(pdata->vdd_reg);
+		ignore = regulator_enable(pdata->vdd_reg);
 		max31760_write_byte(pdata, MAX31760_CTRL_REG1, 0x19);
 		max31760_write_byte(pdata, MAX31760_CTRL_REG2, 0x11);
 		max31760_write_byte(pdata, MAX31760_CTRL_REG3, 0x31);
