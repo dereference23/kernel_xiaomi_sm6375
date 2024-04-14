@@ -932,7 +932,7 @@ endif
 CONFIG_ENABLE_MTRACE_LOG := n
 
 #Flag to enable nud tracking feature
-CONFIG_WLAN_NUD_TRACKING := n
+CONFIG_WLAN_NUD_TRACKING := y
 
 #Flag to enable/Disable Function call trace
 CONFIG_FUNC_CALL_MAP := n
