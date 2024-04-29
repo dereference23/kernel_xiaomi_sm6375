@@ -1688,7 +1688,7 @@ static int rt1711_i2c_suspend(struct device *dev)
 {
 	struct rt1711_chip *chip = dev_get_drvdata(dev);
 
-	dev_info(dev, "%s\n", __func__);
+	dev_dbg(dev, "%s\n", __func__);
 	if (device_may_wakeup(dev))
 		enable_irq_wake(chip->irq);
 	disable_irq(chip->irq);
@@ -1700,7 +1700,7 @@ static int rt1711_i2c_resume(struct device *dev)
 {
 	struct rt1711_chip *chip = dev_get_drvdata(dev);
 
-	dev_info(dev, "%s\n", __func__);
+	dev_dbg(dev, "%s\n", __func__);
 	enable_irq(chip->irq);
 	if (device_may_wakeup(dev))
 		disable_irq_wake(chip->irq);
