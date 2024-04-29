@@ -2322,7 +2322,7 @@ static int spi_geni_suspend(struct device *dev)
 		return ret;
 	}
 
-	GENI_SE_ERR(geni_mas->ipc, true, dev, ":%s: End\n", __func__);
+	GENI_SE_DBG(geni_mas->ipc, true, dev, ":%s: End\n", __func__);
 	return ret;
 }
 #else
