@@ -2412,7 +2412,7 @@ static int sc8551_suspend(struct device *dev)
 	mutex_unlock(&sc->irq_complete);
 	sc8551_enable_adc(sc, false);
 	sc->adc_status = 0;
-	sc_err("Suspend successfully!");
+	sc_dbg("Suspend successfully!");
 
 	return 0;
 }
@@ -2453,7 +2453,7 @@ static int sc8551_resume(struct device *dev)
 #else
 	power_supply_changed(sc->fc2_psy);
 #endif	
-	sc_err("Resume successfully!");
+	sc_dbg("Resume successfully!");
 //	sc8551_enable_adc(sc, true);
 
 	return 0;
