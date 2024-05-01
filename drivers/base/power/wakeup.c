@@ -15,13 +15,8 @@
 #include <linux/seq_file.h>
 #include <linux/debugfs.h>
 #include <linux/pm_wakeirq.h>
-#include <linux/irq.h>
-#include <linux/irqdesc.h>
-#include <linux/wakeup_reason.h>
+#include <linux/types.h>
 #include <trace/events/power.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/irqdesc.h>
 
 #include "power.h"
 
@@ -891,7 +886,6 @@ bool pm_wakeup_pending(void)
 {
 	unsigned long flags;
 	bool ret = false;
-	char suspend_abort[MAX_SUSPEND_ABORT_LEN];
 
 	raw_spin_lock_irqsave(&events_lock, flags);
 	if (events_check_enabled) {
@@ -906,10 +900,6 @@ bool pm_wakeup_pending(void)
 	if (ret) {
 		pm_pr_dbg("Wakeup pending, aborting suspend\n");
 		pm_print_active_wakeup_sources();
-		pm_get_active_wakeup_sources(suspend_abort,
-					     MAX_SUSPEND_ABORT_LEN);
-		log_suspend_abort_reason(suspend_abort);
-		pr_info("PM: %s\n", suspend_abort);
 	}
 
 	return ret || atomic_read(&pm_abort_suspend) > 0;
@@ -960,24 +950,8 @@ void pm_system_irq_wakeup(unsigned int irq_number)
 
 	raw_spin_unlock_irqrestore(&wakeup_irq_lock, flags);
 
-	if (irq_number) {
-		struct irq_desc *desc;
-		const char *name = "null";
-
-		if (msm_show_resume_irq_mask) {
-			desc = irq_to_desc(irq_number);
-			if (desc == NULL)
-				name = "stray irq";
-			else if (desc->action && desc->action->name)
-				name = desc->action->name;
-
-			log_irq_wakeup_reason(irq_number);
-			pr_warn("%s: %d triggered %s\n", __func__,
-					irq_number, name);
-
-		}
+	if (irq_number)
 		pm_system_wakeup();
-	}
 }
 
 unsigned int pm_wakeup_irq(void)
