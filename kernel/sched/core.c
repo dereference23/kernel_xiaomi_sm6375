@@ -3798,6 +3798,7 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 
 #ifdef CONFIG_SPRD_ROTATION_TASK
 static DEFINE_RAW_SPINLOCK(rotation_lock);
+static atomic_t sprd_limit = ATOMIC_INIT(0);
 #endif
 
 /*
@@ -3830,10 +3831,11 @@ void scheduler_tick(void)
 #endif
 
 #ifdef CONFIG_SPRD_ROTATION_TASK
-	if (curr->sched_class == &fair_sched_class) {
-		if (rq->misfit_task_load && curr->state == TASK_RUNNING) {
+	if (!cpumask_test_cpu(cpu, &min_cap_cpu_mask)) {
+		if (atomic_inc_return(&sprd_limit) > CONFIG_NR_CPUS / 2) {
+			atomic_set(&sprd_limit, 0);
 			raw_spin_lock(&rotation_lock);
-			check_for_task_rotation(rq);
+			check_for_task_rotation();
 			raw_spin_unlock(&rotation_lock);
 		}
 	}
