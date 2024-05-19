@@ -10983,3 +10983,7 @@ const struct cpumask *sched_trace_rd_span(struct root_domain *rd)
 #endif
 }
 EXPORT_SYMBOL_GPL(sched_trace_rd_span);
+
+#ifdef CONFIG_SPRD_ROTATION_TASK
+#include "sprd_rotation.c"
+#endif
