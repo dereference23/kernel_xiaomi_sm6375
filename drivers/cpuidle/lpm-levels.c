@@ -97,7 +97,7 @@ static void cluster_prepare(struct lpm_cluster *cluster,
 		int64_t time);
 
 #ifdef CONFIG_DRM_PANEL
-static bool sleep_disabled = true;
+static bool __read_mostly sleep_disabled = true;
 module_param_named(sleep_disabled, sleep_disabled, bool, 0444);
 
 static int lpm_drm_panel_notify(struct notifier_block *nb,
@@ -168,6 +168,9 @@ static int lpm_cpu_qos_notify(struct notifier_block *nb,
 		unsigned long val, void *ptr)
 {
 	int cpu = nb - dev_pm_qos_nb;
+
+	if (sleep_disabled)
+		return NOTIFY_OK;
 
 	preempt_disable();
 	if (cpu != smp_processor_id() && cpu_online(cpu) &&
@@ -647,7 +650,7 @@ static inline bool lpm_disallowed(s64 sleep_us, int cpu, struct lpm_cpu *pm_cpu)
 	if (check_cpu_isolated(cpu))
 		goto out;
 
-	if (sleep_disabled || sleep_us < 0)
+	if (sleep_us < 0)
 		return true;
 
 	bias_time = sched_lpm_disallowed_time(cpu);
@@ -1377,7 +1380,7 @@ static int lpm_cpuidle_select(struct cpuidle_driver *drv,
 	if (duration < TICK_NSEC)
 		*stop_tick = false;
 
-	if (!cpu)
+	if (!cpu || sleep_disabled)
 		return 0;
 
 	return cpu_power_select(dev, cpu, ktime_to_us(duration));
@@ -1437,12 +1440,29 @@ static void update_history(struct cpuidle_device *dev, int idx)
 static int lpm_cpuidle_enter(struct cpuidle_device *dev,
 		struct cpuidle_driver *drv, int idx)
 {
-	struct lpm_cpu *cpu = per_cpu(cpu_lpm, dev->cpu);
-	bool success = false;
-	const struct cpumask *cpumask = get_cpu_mask(dev->cpu);
-	ktime_t start = ktime_get();
-	uint64_t start_time = ktime_to_ns(start), end_time;
-	int ret = -EBUSY;
+	struct lpm_cpu *cpu;
+	bool success;
+	const struct cpumask *cpumask;
+	ktime_t start;
+	uint64_t start_time, end_time;
+	int ret;
+
+	if (sleep_disabled) {
+		if (need_resched() || is_IPI_pending(cpumask_of(dev->cpu)))
+		        ret = -EBUSY;
+		else {
+			ret = 0;
+			cpu_do_idle();
+		}
+		return ret;
+	}
+
+	cpu = per_cpu(cpu_lpm, dev->cpu);
+	success = false;
+	cpumask = get_cpu_mask(dev->cpu);
+	start = ktime_get();
+	start_time = ktime_to_ns(start);
+	ret = -EBUSY;
 
 	/* Read the timer from the CPU that is entering idle */
 	per_cpu(next_hrtimer, dev->cpu) = tick_nohz_get_next_hrtimer();
