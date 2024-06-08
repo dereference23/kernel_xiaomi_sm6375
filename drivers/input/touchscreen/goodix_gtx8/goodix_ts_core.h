@@ -45,7 +45,7 @@
 #endif
 #if defined(CONFIG_DRM)
 #include <drm/drm_panel.h>
-//#elif defined(CONFIG_FB)
+#elif defined(CONFIG_FB)
 #include <linux/notifier.h>
 #include <linux/fb.h>
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
@@ -552,7 +552,7 @@ struct goodix_ts_core {
 	struct mutex call_back;
 #if defined(CONFIG_DRM)
 	struct notifier_block drm_notifier;
-//#elif defined(CONFIG_FB)
+#elif defined(CONFIG_FB)
 	struct notifier_block fb_notifier;
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
 	struct early_suspend early_suspend;
