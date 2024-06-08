@@ -307,4 +307,13 @@ static inline int cpuidle_register_governor(struct cpuidle_governor *gov)
 #define CPU_PM_CPU_IDLE_ENTER_RETENTION_PARAM(low_level_idle_enter, idx, state)	\
 	__CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, state, 1)
 
+#ifdef CONFIG_ARM_QCOM_LPM_CPUIDLE
+extern bool lpm_sleep_disabled(void);
+#else
+static bool lpm_sleep_disabled(void)
+{
+	return false;
+}
+#endif
+
 #endif /* _LINUX_CPUIDLE_H */
