@@ -81,7 +81,6 @@ static struct hyp_core_ctl_cpu_map hh_cpumap[NR_CPUS];
 static bool is_vcpu_info_populated;
 static bool init_done;
 static int nr_vcpus;
-static bool freq_qos_init_done;
 
 static inline void hyp_core_ctl_print_status(char *msg)
 {
@@ -112,14 +111,12 @@ static void hyp_core_ctl_undo_reservation(struct hyp_core_ctl_data *hcd)
 
 		cpumask_clear_cpu(cpu, &hcd->our_isolated_cpus);
 
-		if (freq_qos_init_done) {
-			qos_req = &per_cpu(qos_min_req, cpu);
-			ret = freq_qos_update_request(qos_req,
-					FREQ_QOS_MIN_DEFAULT_VALUE);
-			if (ret < 0)
-				pr_err("fail to update min freq for CPU%d ret=%d\n",
+		qos_req = &per_cpu(qos_min_req, cpu);
+		ret = freq_qos_update_request(qos_req,
+						FREQ_QOS_MIN_DEFAULT_VALUE);
+		if (ret < 0)
+			pr_err("fail to update min freq for CPU%d ret=%d\n",
 								cpu, ret);
-		}
 	}
 
 	hyp_core_ctl_print_status("undo_reservation_end");
@@ -282,9 +279,9 @@ static void hyp_core_ctl_do_reservation(struct hyp_core_ctl_data *hcd)
 
 		cpumask_set_cpu(i, &hcd->our_isolated_cpus);
 
+		qos_req = &per_cpu(qos_min_req, i);
 		min_freq = per_cpu(qos_min_freq, i);
-		if (min_freq && freq_qos_init_done) {
-			qos_req = &per_cpu(qos_min_req, i);
+		if (min_freq) {
 			ret = freq_qos_update_request(qos_req, min_freq);
 			if (ret < 0)
 				pr_err("fail to update min freq for CPU%d ret=%d\n",
@@ -342,9 +339,9 @@ static void hyp_core_ctl_do_reservation(struct hyp_core_ctl_data *hcd)
 
 			cpumask_set_cpu(i, &hcd->our_isolated_cpus);
 
+			qos_req = &per_cpu(qos_min_req, i);
 			min_freq = per_cpu(qos_min_freq, i);
-			if (min_freq && freq_qos_init_done) {
-				qos_req = &per_cpu(qos_min_req, i);
+			if (min_freq) {
 				ret = freq_qos_update_request(qos_req,
 								min_freq);
 				if (ret < 0)
@@ -389,14 +386,12 @@ static void hyp_core_ctl_do_reservation(struct hyp_core_ctl_data *hcd)
 
 			cpumask_clear_cpu(i, &hcd->our_isolated_cpus);
 
-			if (freq_qos_init_done) {
-				qos_req = &per_cpu(qos_min_req, i);
-				ret = freq_qos_update_request(qos_req,
+			qos_req = &per_cpu(qos_min_req, i);
+			ret = freq_qos_update_request(qos_req,
 						FREQ_QOS_MIN_DEFAULT_VALUE);
-				if (ret < 0)
-					pr_err("fail to update min freq for CPU%d ret=%d\n",
+			if (ret < 0)
+				pr_err("fail to update min freq for CPU%d ret=%d\n",
 								i, ret);
-			}
 
 			if (--unisolate_need == 0)
 				break;
@@ -537,14 +532,12 @@ static int hyp_core_ctl_cpu_cooling_cb(struct notifier_block *nb,
 		if (cpumask_test_cpu(cpu, &the_hcd->our_isolated_cpus)) {
 			sched_unisolate_cpu(cpu);
 			cpumask_clear_cpu(cpu, &the_hcd->our_isolated_cpus);
-			if (freq_qos_init_done) {
-				qos_req = &per_cpu(qos_min_req, cpu);
-				ret = freq_qos_update_request(qos_req,
+			qos_req = &per_cpu(qos_min_req, cpu);
+			ret = freq_qos_update_request(qos_req,
 						FREQ_QOS_MIN_DEFAULT_VALUE);
-				if (ret < 0)
-					pr_err("fail to update min freq for CPU%d ret=%d\n",
+			if (ret < 0)
+				pr_err("fail to update min freq for CPU%d ret=%d\n",
 								cpu, ret);
-			}
 		}
 	} else {
 		/*
@@ -604,14 +597,12 @@ static int hyp_core_ctl_hp_offline(unsigned int cpu)
 	 */
 	if (cpumask_test_and_clear_cpu(cpu, &the_hcd->our_isolated_cpus)) {
 		sched_unisolate_cpu_unlocked(cpu);
-		if (freq_qos_init_done) {
-			qos_req = &per_cpu(qos_min_req, cpu);
-			ret = freq_qos_update_request(qos_req,
+		qos_req = &per_cpu(qos_min_req, cpu);
+		ret = freq_qos_update_request(qos_req,
 					FREQ_QOS_MIN_DEFAULT_VALUE);
-			if (ret < 0)
-				pr_err("fail to update min freq for CPU%d ret=%d\n",
+		if (ret < 0)
+			pr_err("fail to update min freq for CPU%d ret=%d\n",
 								cpu, ret);
-		}
 	}
 
 	return 0;
@@ -808,6 +799,7 @@ static ssize_t status_show(struct device *dev, struct device_attribute *attr,
 
 static DEVICE_ATTR_RO(status);
 
+static bool freq_qos_init_done;
 static int init_freq_qos_req(void)
 {
 	int cpu, ret;
