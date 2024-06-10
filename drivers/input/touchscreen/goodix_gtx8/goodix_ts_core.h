@@ -51,7 +51,6 @@
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
 #include <linux/earlysuspend.h>
 #endif
-#include <linux/pm_qos.h>
 
 #define GOODIX_FLASH_CONFIG_WITH_ISP	1
 
@@ -487,7 +486,6 @@ struct goodix_ts_core {
 #elif defined(CONFIG_HAS_EARLYSUSPEND)
 	struct early_suspend early_suspend;
 #endif
-	struct pm_qos_request pm_qos_req;
 };
 
 /* external module structures */
