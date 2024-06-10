@@ -13,7 +13,6 @@
 #include <linux/of_address.h>
 #include <linux/of_platform.h>
 #include <linux/pm_opp.h>
-#include <linux/sched.h>
 #include <linux/slab.h>
 
 #define LUT_MAX_ENTRIES			40U
@@ -26,15 +25,11 @@
 #define MAX_FN_SIZE			20
 #define MAX_ROW				2
 
-#define CYCLE_CNTR_OFFSET(c, m, acc_count)				\
-			(acc_count ? ((c - cpumask_first(m) + 1) * 4) : 0)
-
 enum {
 	REG_ENABLE,
 	REG_FREQ_LUT,
 	REG_VOLT_LUT,
 	REG_PERF_STATE,
-	REG_CYCLE_CNTR,
 
 	REG_ARRAY_SIZE,
 };
@@ -55,18 +50,11 @@ struct cpufreq_qcom {
 	cpumask_t related_cpus;
 };
 
-struct cpufreq_counter {
-	u64 total_cycle_counter;
-	u32 prev_cycle_counter;
-	spinlock_t lock;
-};
-
 static const u16 cpufreq_qcom_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_ENABLE]		= 0x0,
 	[REG_FREQ_LUT]		= 0x110,
 	[REG_VOLT_LUT]		= 0x114,
 	[REG_PERF_STATE]	= 0x920,
-	[REG_CYCLE_CNTR]	= 0x9c0,
 };
 
 static const u16 cpufreq_qcom_epss_std_offsets[REG_ARRAY_SIZE] = {
@@ -74,48 +62,9 @@ static const u16 cpufreq_qcom_epss_std_offsets[REG_ARRAY_SIZE] = {
 	[REG_FREQ_LUT]		= 0x100,
 	[REG_VOLT_LUT]		= 0x200,
 	[REG_PERF_STATE]	= 0x320,
-	[REG_CYCLE_CNTR]	= 0x3c4,
 };
 
 static struct cpufreq_qcom *qcom_freq_domain_map[NR_CPUS];
-static struct cpufreq_counter qcom_cpufreq_counter[NR_CPUS];
-
-static u64 qcom_cpufreq_get_cpu_cycle_counter(int cpu)
-{
-	struct cpufreq_counter *cpu_counter;
-	struct cpufreq_policy *policy;
-	u64 cycle_counter_ret;
-	unsigned long flags;
-	u16 offset;
-	u32 val;
-
-	policy = cpufreq_cpu_get_raw(cpu);
-	if (!policy)
-		return 0;
-
-	cpu_counter = &qcom_cpufreq_counter[cpu];
-	spin_lock_irqsave(&cpu_counter->lock, flags);
-
-	offset = CYCLE_CNTR_OFFSET(cpu, policy->related_cpus,
-					accumulative_counter);
-	val = readl_relaxed_no_log(policy->driver_data +
-				    offsets[REG_CYCLE_CNTR] + offset);
-
-	if (val < cpu_counter->prev_cycle_counter) {
-		/* Handle counter overflow */
-		cpu_counter->total_cycle_counter += UINT_MAX -
-			cpu_counter->prev_cycle_counter + val;
-		cpu_counter->prev_cycle_counter = val;
-	} else {
-		cpu_counter->total_cycle_counter += val -
-			cpu_counter->prev_cycle_counter;
-		cpu_counter->prev_cycle_counter = val;
-	}
-	cycle_counter_ret = cpu_counter->total_cycle_counter;
-	spin_unlock_irqrestore(&cpu_counter->lock, flags);
-
-	return cycle_counter_ret;
-}
 
 static int
 qcom_cpufreq_hw_target_index(struct cpufreq_policy *policy,
@@ -524,9 +473,6 @@ static int qcom_resources_init(struct platform_device *pdev)
 static int qcom_cpufreq_hw_driver_probe(struct platform_device *pdev)
 {
 	int rc;
-	struct cpu_cycle_counter_cb cycle_counter_cb = {
-		.get_cpu_cycle_counter = qcom_cpufreq_get_cpu_cycle_counter,
-	};
 
 	/* Get the bases of cpufreq for domains */
 	rc = qcom_resources_init(pdev);
@@ -538,12 +484,6 @@ static int qcom_cpufreq_hw_driver_probe(struct platform_device *pdev)
 	rc = cpufreq_register_driver(&cpufreq_qcom_hw_driver);
 	if (rc) {
 		dev_err(&pdev->dev, "CPUFreq HW driver failed to register\n");
-		return rc;
-	}
-
-	rc = register_cpu_cycle_counter_cb(&cycle_counter_cb);
-	if (rc) {
-		dev_err(&pdev->dev, "cycle counter cb failed to register\n");
 		return rc;
 	}
 
