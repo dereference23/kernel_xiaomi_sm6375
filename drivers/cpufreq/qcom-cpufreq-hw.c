@@ -19,9 +19,6 @@
 #include <linux/slab.h>
 #include <linux/topology.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/dcvsh.h>
-
 #define LUT_MAX_ENTRIES			40U
 #define LUT_SRC				GENMASK(31, 30)
 #define LUT_L_VAL			GENMASK(7, 0)
@@ -117,8 +114,6 @@ static unsigned long limits_mitigation_notify(struct cpufreq_qcom *c)
 		else {
 			sched_update_cpu_freq_min_max(&c->related_cpus, 0,
 					c->table[i].frequency);
-			trace_dcvsh_freq(cpumask_first(&c->related_cpus),
-						c->table[i].frequency);
 			return c->table[i].frequency;
 		}
 	}
