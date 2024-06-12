@@ -20,6 +20,9 @@
 #include <linux/skbuff.h>
 #include "rmnet_shs_modules.h"
 #include "rmnet_shs_common.h"
+#ifndef cpu_isolated
+#define cpu_isolated(cpu)	0U
+#endif
 MODULE_LICENSE("\x47\x50\x4c\x20\x76\x32");
 #define DATARMNET59f7cb903f (0xc07+4861-0x1e3c)
 #define DATARMNET832dcfb5f8 (0xeb7+698-0x110d)
