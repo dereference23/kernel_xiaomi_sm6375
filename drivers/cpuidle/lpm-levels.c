@@ -1769,6 +1769,17 @@ static int lpm_probe(struct platform_device *pdev)
 	unsigned int cpu;
 	struct hrtimer *cpu_histtimer;
 	struct kobject *module_kobj = NULL;
+#ifdef CONFIG_ARCH_BLAIR
+	int i;
+	struct cpufreq_policy policy;
+	const struct {
+		int cpu;
+		int freq;
+	} eff_table[] = {
+		0, 1708800,
+		6, 1228800,
+	};
+#endif
 #ifdef CONFIG_DRM_PANEL
 	struct drm_panel *active_panel = goodix_get_panel();
 
@@ -1842,6 +1853,12 @@ static int lpm_probe(struct platform_device *pdev)
 
 	suspend_set_ops(&lpm_suspend_ops);
 	s2idle_set_ops(&lpm_s2idle_ops);
+
+#ifdef CONFIG_ARCH_BLAIR
+	for (i = 0; i < ARRAY_SIZE(eff_table); ++i)
+		if (!cpufreq_get_policy(&policy, eff_table[i].cpu))
+			freq_qos_update_request(policy.min_freq_req, eff_table[i].freq);
+#endif
 
 	return 0;
 failed:
