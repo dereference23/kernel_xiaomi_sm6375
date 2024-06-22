@@ -448,6 +448,7 @@ static const char * const fw_path[] = {
 	fw_path_para,
 #ifdef CONFIG_WT_QGKI
 	"/vendor/firmware",
+	"/vendor/firmware_mnt/image",
 #else
 	"/lib/firmware/updates/" UTS_RELEASE,
 	"/lib/firmware/updates",
