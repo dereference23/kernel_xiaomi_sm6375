@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022, 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -152,6 +152,8 @@ static const struct snd_kcontrol_new name##_mux = \
 #define TAVIL_VERSION_ENTRY_SIZE 17
 
 #define WCD934X_DIG_CORE_COLLAPSE_TIMER_MS  (5 * 1000)
+
+#define ENABLE_FIFO_OVERRUN_AUTO_RECOVERY_BIT	0x1
 
 enum {
 	POWER_COLLAPSE,
@@ -1560,6 +1562,14 @@ static void tavil_codec_enable_slim_port_intr(
 					reg, val);
 				val = wcd9xxx_interface_reg_read(
 					tavil_p->wcd9xxx, reg);
+			}
+			/* Enable auto recovery from slim port overflow on port_num */
+			reg = WCD934X_SLIM_PGD_PORT_TX_OR_UR_CFG_0 + port_num;
+			val = wcd9xxx_interface_reg_read(tavil_p->wcd9xxx, reg);
+			if(!(val & (1 << ENABLE_FIFO_OVERRUN_AUTO_RECOVERY_BIT))) {
+				val = val | (1 << ENABLE_FIFO_OVERRUN_AUTO_RECOVERY_BIT);
+				wcd9xxx_interface_reg_write(tavil_p->wcd9xxx, reg, val);
+				val = wcd9xxx_interface_reg_read(tavil_p->wcd9xxx, reg);
 			}
 		}
 	}
@@ -10018,6 +10028,15 @@ static irqreturn_t tavil_slimbus_irq(int irq, void *data)
 			WARN(!cleared,
 			     "Couldn't find slimbus %s port %d for closing\n",
 			     (tx ? "TX" : "RX"), port_id);
+
+			/* Enable auto recovery from slim port overflow on port_num */
+			reg = WCD934X_SLIM_PGD_PORT_TX_OR_UR_CFG_0 + port_id;
+			val = wcd9xxx_interface_reg_read(tavil->wcd9xxx, reg);
+			if((val & (1 << ENABLE_FIFO_OVERRUN_AUTO_RECOVERY_BIT))) {
+				val = val ^ (1 << ENABLE_FIFO_OVERRUN_AUTO_RECOVERY_BIT);
+				wcd9xxx_interface_reg_write(tavil->wcd9xxx, reg, val);
+				val = wcd9xxx_interface_reg_read(tavil->wcd9xxx, reg);
+			}
 		}
 		wcd9xxx_interface_reg_write(tavil->wcd9xxx,
 					    WCD934X_SLIM_PGD_PORT_INT_CLR_RX_0 +
