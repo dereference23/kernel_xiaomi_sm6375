@@ -1,0 +1,132 @@
+/delete-node/ &wsa881x_i2c_44;
+/delete-node/ &wsa881x_i2c_e;
+
+&dai_mi2s1_tx {
+	qcom,msm-mi2s-lines = <2>;
+};
+
+&holi_snd {
+	qcom,audio-routing =
+		"AMIC1", "Analog Mic1",
+		"Analog Mic1", "MIC BIAS1",
+		"AMIC2", "Analog Mic2",
+		"Analog Mic2", "MIC BIAS2",
+		"AMIC3", "Analog Mic3",
+		"Analog Mic3", "MIC BIAS3",
+/*
+		"AMIC4", "Analog Mic4",
+		"Analog Mic4", "MIC BIAS3",
+*/
+		"TX DMIC0", "Digital Mic0",
+		"TX DMIC0", "MIC BIAS1",
+		"TX DMIC1", "Digital Mic1",
+		"TX DMIC1", "MIC BIAS1",
+		"TX DMIC2", "Digital Mic2",
+		"TX DMIC2", "MIC BIAS3",
+		"TX DMIC3", "Digital Mic3",
+		"TX DMIC3", "MIC BIAS3",
+		"IN1_HPHL", "HPHL_OUT",
+		"IN2_HPHR", "HPHR_OUT",
+		"IN3_AUX", "AUX_OUT",
+		"RX_TX DEC0_INP", "TX DEC0 MUX",
+		"RX_TX DEC1_INP", "TX DEC1 MUX",
+		"RX_TX DEC2_INP", "TX DEC2 MUX",
+		"RX_TX DEC3_INP", "TX DEC3 MUX",
+/*
+		"SpkrMono WSA_IN", "AUX",
+*/
+		"TX SWR_INPUT", "WCD_TX_OUTPUT",
+		"VA SWR_INPUT", "VA_SWR_CLK",
+		"VA SWR_INPUT", "WCD_TX_OUTPUT",
+		"VA_AIF1 CAP", "VA_SWR_CLK",
+		"VA_AIF2 CAP", "VA_SWR_CLK",
+		"VA_AIF3 CAP", "VA_SWR_CLK",
+		"VA DMIC0", "Digital Mic0",
+		"VA DMIC1", "Digital Mic1",
+		"VA DMIC2", "Digital Mic2",
+		"VA DMIC3", "Digital Mic3",
+		"VA DMIC4", "Digital Mic4",
+		"VA DMIC5", "Digital Mic5",
+		"VA DMIC0", "VA MIC BIAS1",
+		"VA DMIC1", "VA MIC BIAS1",
+		"VA DMIC2", "VA MIC BIAS3",
+		"VA DMIC3", "VA MIC BIAS3";
+	qcom,sec-mi2s-gpios = <&cdc_sec_mi2s_gpios>;
+	asoc-codec = <&stub_codec>, <&bolero>, <&wcd937x_codec>,
+		<&aw882x_i2c_34>, <&aw882x_i2c_35>,
+		<&fs19xx_i2c_34>, <&fs19xx_i2c_35>;
+	asoc-codec-names = "msm-stub-codec.1", "bolero_codec", "wcd937x_codec",
+		"aw882xx_smartpa.1-0034", "aw882xx_smartpa.1-0035";
+};
+
+&qupv3_se10_i2c {
+	aw882x_i2c_34: aw882xx_smartpa@34 {
+		compatible = "awinic,aw882xx_smartpa";
+		reg = <0x34>;
+		irq-gpio = <&tlmm 59 0x2008>;
+		sound-channel = <0>;
+		aw-tx-topo-id = <0x1000ff00>;
+		aw-tx-port-id = <0x1003>;
+		aw-rx-topo-id = <0x1000ff01>;
+		aw-rx-port-id = <0x1002>;
+		aw-re-min = <4000>;
+		aw-re-max = <30000>;
+		aw-cali-mode = "aw_attr";
+	};
+
+	aw882x_i2c_35: aw882xx_smartpa@35 {
+		compatible = "awinic,aw882xx_smartpa";
+		reg = <0x35>;
+		irq-gpio = <&tlmm 60 0x2008>;
+		sound-channel = <1>;
+		aw-tx-topo-id = <0x1000ff00>;
+		aw-tx-port-id = <0x1003>;
+		aw-rx-topo-id = <0x1000ff01>;
+		aw-rx-port-id = <0x1002>;
+		aw-re-min = <4000>;
+		aw-re-max = <30000>;
+		aw-cali-mode = "aw_attr";
+	};
+
+	fs19xx_i2c_34: fs19xx@34 {
+		compatible = "foursemi,fs19xx";
+		reg = <0x36>;
+		irq-gpio = <&tlmm 59 0x2008>;
+		fsm,rst-gpio = <&tlmm 12 GPIO_ACTIVE_HIGH>;
+	};
+
+	fs19xx_i2c_35: fs19xx@35 {
+		compatible = "foursemi,fs19xx";
+		reg = <0x37>;
+		irq-gpio = <&tlmm 60 0x2008>;
+		fsm,rst-gpio = <&tlmm 11 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&soc {
+	cdc_sec_mi2s_gpios: msm_cdc_pinctrl_sec {
+		compatible = "qcom,msm-cdc-pinctrl";
+		pinctrl-names = "aud_active", "aud_sleep";
+		pinctrl-0 = <&lpi_i2s2_sck_active &lpi_i2s2_ws_active
+				&lpi_i2s2_sd0_active &lpi_i2s2_sd1_active>;
+		pinctrl-1 = <&lpi_i2s2_sck_sleep &lpi_i2s2_ws_sleep
+				&lpi_i2s2_sd0_sleep &lpi_i2s2_sd1_sleep>;
+		#qcom,lpi-gpios;
+		#gpio-cells = <0>;
+	};
+};
+
+&tlmm {
+	/delete-node/ spkr_1_sd_n;
+};
+
+&wcd937x_codec {
+	qcom,cdc-micbias1-mv = <2400>;
+	qcom,cdc-micbias2-mv = <2400>;
+	qcom,cdc-micbias3-mv = <2400>;
+};
+
+&wsa881x_analog_reset_gpio {
+	pinctrl-0 = <&spkr_2_sd_n_active>;
+	pinctrl-1 = <&spkr_2_sd_n_sleep>;
+};
