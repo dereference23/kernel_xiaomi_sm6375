@@ -1,5 +1,6 @@
 #include "../qcom/blair-qrd-nopmi.dts"
 #include "veux-audio.dtsi"
+#include "veux-camera.dtsi"
 
 / {
 	aliases {
