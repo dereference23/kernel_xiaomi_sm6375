@@ -124,6 +124,8 @@
 };
 
 &qupv3_se10_i2c {
+	/delete-node/ awinic@64;
+
 	bq25890_main: bq25890@6a {
 		#io-channel-cells = <1>;
 		compatible = "ti,bq2589x-1";
