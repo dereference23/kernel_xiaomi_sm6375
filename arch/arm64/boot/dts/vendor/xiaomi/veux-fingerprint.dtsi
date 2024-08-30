@@ -19,6 +19,17 @@
 		fp-gpio-reset = <&tlmm 18 GPIO_ACTIVE_HIGH>;
 		power_enable = <&tlmm 102 GPIO_ACTIVE_HIGH>;
 	};
+
+	silead_fp {
+		compatible = "sil,silead_fp";
+		qcom,qup-id = <3>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <17 IRQ_TYPE_EDGE_RISING>;
+		irq-gpios = <&tlmm 17 GPIO_ACTIVE_HIGH>;
+		rst-gpios = <&tlmm 18 GPIO_ACTIVE_HIGH>;
+		avdd-gpios = <&tlmm 102 GPIO_ACTIVE_HIGH>;
+		panel = <&dsi_k6s_38_0c_0a_fhd_dsc_video>;
+	};
 };
 
 &tlmm {
