@@ -1,0 +1,27 @@
+#include "dsi-panel-k6s-38-0c-0a-fhdp-dsc-video.dtsi"
+
+&display_panel_avdd {
+	/delete-property/ gpio;
+	/delete-property/ enable-active-high;
+};
+
+&display_panel_avdd_default {
+	mux {
+		pins = "gpio47";
+	};
+
+	config {
+		pins = "gpio47";
+	};
+};
+
+&dsi_panel_pwr_supply_avdd {
+	qcom,panel-supply-entry@0 {
+		qcom,supply-min-voltage = <1876000>;
+		qcom,supply-max-voltage = <1876000>;
+	};
+};
+
+&sde_dsi {
+	qcom,dsi-default-panel = <&dsi_k6s_38_0c_0a_fhd_dsc_video>;
+};
