@@ -2,6 +2,7 @@
 #include "veux-audio.dtsi"
 #include "veux-camera.dtsi"
 #include "veux-consumerir.dtsi"
+#include "veux-display.dtsi"
 
 / {
 	aliases {
