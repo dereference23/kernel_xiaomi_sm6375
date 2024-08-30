@@ -3,6 +3,7 @@
 #include "veux-camera.dtsi"
 #include "veux-consumerir.dtsi"
 #include "veux-display.dtsi"
+#include "veux-fingerprint.dtsi"
 
 / {
 	aliases {
