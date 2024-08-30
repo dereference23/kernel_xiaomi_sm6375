@@ -6,6 +6,7 @@
 #include "veux-fingerprint.dtsi"
 #include "veux-haptics.dtsi"
 #include "veux-memory.dtsi"
+#include "veux-nfc.dtsi"
 
 / {
 	aliases {
