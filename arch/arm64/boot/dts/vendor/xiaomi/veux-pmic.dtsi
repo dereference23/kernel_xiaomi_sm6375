@@ -1,2 +1,12 @@
 /delete-node/ &pm8008_8;
 /delete-node/ &pm8008_9;
+
+&pm6125_vadc {
+	usb_therm {
+		reg = <ADC5_AMUX_THM2_100K_PU>;
+		label = "usb_therm";
+		qcom,ratiometric;
+		qcom,hw-settle-time = <200>;
+		qcom,pre-scaling = <1 1>;
+	};
+};
