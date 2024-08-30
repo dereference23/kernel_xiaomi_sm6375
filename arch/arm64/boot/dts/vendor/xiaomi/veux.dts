@@ -10,6 +10,7 @@
 #include "veux-pinctrl.dtsi"
 #include "veux-pmic.dtsi"
 #include "veux-thermal.dtsi"
+#include "veux-touchscreen.dtsi"
 
 / {
 	aliases {
