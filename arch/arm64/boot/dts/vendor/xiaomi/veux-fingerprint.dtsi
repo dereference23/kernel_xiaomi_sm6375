@@ -1,0 +1,57 @@
+&soc {
+	fpc1020 {
+		compatible = "fpc,fpc1020";
+		interrupt-parent = <&tlmm>;
+		interrupts = <17 IRQ_TYPE_NONE>;
+		fpc,gpio_rst = <&tlmm 18 GPIO_ACTIVE_HIGH>;
+		fpc,gpio_irq = <&tlmm 17 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "fpc1020_reset_reset", "fpc1020_reset_active", "fpc1020_irq_active";
+		pinctrl-0 = <&msm_gpio_18>;
+		pinctrl-1 = <&msm_gpio_18_output_high>;
+		pinctrl-2 = <&msm_gpio_17>;
+	};
+};
+
+&tlmm {
+	msm_gpio_17: msm_gpio_17 {
+		mux {
+			pins = "gpio17";
+			function = "gpio";
+		};
+
+		config {
+			pins = "gpio17";
+			drive-strength = <2>;
+			bias-pull-up;
+			input-enable;
+		};
+	};
+
+	msm_gpio_18: msm_gpio_18 {
+		mux {
+			pins = "gpio18";
+			function = "gpio";
+		};
+
+		config {
+			pins = "gpio18";
+			drive-strength = <2>;
+			bias-disable;
+			output-low;
+		};
+	};
+
+	msm_gpio_18_output_high: msm_gpio_18_output_high {
+		mux {
+			pins = "gpio18";
+			function = "gpio";
+		};
+
+		config {
+			pins = "gpio18";
+			drive-strength = <2>;
+			bias-disable;
+			output-high;
+		};
+	};
+};
