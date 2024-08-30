@@ -4,6 +4,7 @@
 #include "veux-consumerir.dtsi"
 #include "veux-display.dtsi"
 #include "veux-fingerprint.dtsi"
+#include "veux-haptics.dtsi"
 
 / {
 	aliases {
