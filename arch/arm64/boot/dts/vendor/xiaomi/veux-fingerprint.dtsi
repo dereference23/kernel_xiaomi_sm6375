@@ -10,6 +10,15 @@
 		pinctrl-1 = <&msm_gpio_18_output_high>;
 		pinctrl-2 = <&msm_gpio_17>;
 	};
+
+	goodix_fp {
+		compatible = "goodix,fingerprint";
+		interrupt-parent = <&tlmm>;
+		interrupts = <17 IRQ_TYPE_EDGE_RISING>;
+		fp-gpio-irq = <&tlmm 17 GPIO_ACTIVE_HIGH>;
+		fp-gpio-reset = <&tlmm 18 GPIO_ACTIVE_HIGH>;
+		power_enable = <&tlmm 102 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &tlmm {
