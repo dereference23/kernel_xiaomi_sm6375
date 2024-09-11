@@ -6666,7 +6666,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	/* GSI 2.2 requires to allocate all EE GSI channel
 	 * during device bootup.
 	 */
-	if (gsi_props.ver == GSI_VER_2_2) {
+	if (gsi_props.ver == GSI_VER_2_2 && !ipa3_ctx->gsi_status) {
 		result = ipa3_alloc_gsi_channel();
 		if (result) {
 			IPAERR("Failed to alloc the GSI channels\n");
@@ -6900,38 +6900,54 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 		return;
 	}
 
-	if (ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_EMULATION &&
-	    ((ipa3_ctx->platform_type != IPA_PLAT_TYPE_MDM) ||
-	    (ipa3_ctx->ipa_hw_type >= IPA_HW_v3_5))) {
-		/* some targets sharing same lunch option but
-		 * using different signing images, adding support to
-		 * load specific FW image to based on dt entry.
-		 */
-		if (ipa3_ctx->gsi_fw_file_name)
-			result = ipa3_pil_load_ipa_fws(
-						ipa3_ctx->gsi_fw_file_name);
-		else
-			result = ipa3_pil_load_ipa_fws(IPA_SUBSYSTEM_NAME);
+	ipa3_ctx->gsi_status = gsi_status_enabled();
+
+	if(!ipa3_ctx->gsi_status) {
+		if (ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_EMULATION &&
+			((ipa3_ctx->platform_type != IPA_PLAT_TYPE_MDM) ||
+			(ipa3_ctx->ipa_hw_type >= IPA_HW_v3_5))) {
+			/* some targets sharing same lunch option but
+			 * using different signing images, adding support to
+			 * load specific FW image to based on dt entry.
+			 */
+#if IS_ENABLED(CONFIG_QCOM_MDT_LOADER)
+			if (ipa3_ctx->gsi_fw_file_name)
+				result = ipa3_mdt_load_ipa_fws(
+							ipa3_ctx->gsi_fw_file_name);
+			else
+				result = ipa3_mdt_load_ipa_fws(IPA_SUBSYSTEM_NAME);
+#else /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
+			if (ipa3_ctx->gsi_fw_file_name)
+				result = ipa3_pil_load_ipa_fws(
+							ipa3_ctx->gsi_fw_file_name);
+			else
+				result = ipa3_pil_load_ipa_fws(IPA_SUBSYSTEM_NAME);
+#endif /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
+		} else {
+			result = ipa3_manual_load_ipa_fws();
+		}
+
+
+		if (result) {
+			ipa3_ctx->ipa_pil_load++;
+			IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+			IPADBG("IPA firmware loading deffered to a work queue\n");
+			queue_delayed_work(ipa3_ctx->transport_power_mgmt_wq,
+				&ipa3_fw_load_failure_handle,
+				msecs_to_jiffies(DELAY_BEFORE_FW_LOAD));
+			return;
+		}
+		mutex_lock(&ipa3_ctx->fw_load_data.lock);
+		ipa3_ctx->fw_load_data.state = IPA_FW_LOAD_STATE_LOADED;
+		mutex_unlock(&ipa3_ctx->fw_load_data.lock);
+		pr_info("IPA FW loaded successfully\n");
 	} else {
-		result = ipa3_manual_load_ipa_fws();
+		pr_info("IPA FW is already loaded\n");
+		/*uC is already loaded. Marking this as after SSR boot to avoid loading uc again*/
+		ipa3_ctx->uc_ctx.uc_loaded = true;
 	}
 
-
-	if (result) {
-
-		ipa3_ctx->ipa_pil_load++;
-		IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
-		IPADBG("IPA firmware loading deffered to a work queue\n");
-		queue_delayed_work(ipa3_ctx->transport_power_mgmt_wq,
-			&ipa3_fw_load_failure_handle,
-			msecs_to_jiffies(DELAY_BEFORE_FW_LOAD));
-		return;
-	}
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
-	mutex_lock(&ipa3_ctx->fw_load_data.lock);
-	ipa3_ctx->fw_load_data.state = IPA_FW_LOAD_STATE_LOADED;
-	mutex_unlock(&ipa3_ctx->fw_load_data.lock);
-	pr_info("IPA FW loaded successfully\n");
 
 	result = ipa3_post_init(&ipa3_res, ipa3_ctx->cdev.dev);
 	if (result) {
@@ -9684,7 +9700,7 @@ static void ipa3_deepsleep_suspend(void)
 	ipa3_ctx->deepsleep = true;
 	/*Disabling the LAN NAPI*/
 	ipa3_disable_napi_lan_rx();
-	/*NOt allow uC related operations until uC load again*/
+	/*Not allow uC related operations until uC load again*/
 	ipa3_ctx->uc_ctx.uc_loaded = false;
 	/*Disconnecting LAN PROD/LAN CONS/CMD PROD apps pipes*/
 	ipa3_teardown_apps_pipes();
