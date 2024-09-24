@@ -814,6 +814,7 @@ static int32_t virt_npu_map_buf(struct npu_client *client,
 	struct npu_ion_buf *ion_buf = NULL;
 	int rc = 0;
 
+	mutex_lock(&npu_dev->lock);
 	ion_buf = npu_alloc_npu_ion_buffer(client, buf_hdl, size);
 	if (!ion_buf) {
 		NPU_ERR("fail to alloc npu_ion_buffer\n");
@@ -853,6 +854,7 @@ static int32_t virt_npu_map_buf(struct npu_client *client,
 
 	rc = virt_npu_mmap(client, 0, ion_buf->table->sgl,
 		ion_buf->table->nents, size, &ion_buf->iova);
+	mutex_unlock(&npu_dev->lock);
 
 map_end:
 	if (rc)
