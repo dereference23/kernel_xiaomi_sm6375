@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (c) 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #include <linux/delay.h>
@@ -24,10 +25,12 @@ enum qcom_download_dest {
 
 struct qcom_dload {
 	struct notifier_block panic_nb;
+	struct notifier_block reboot_nb;
 	struct notifier_block restart_nb;
 	struct kobject kobj;
 
 	bool in_panic;
+	bool in_reboot;
 	void __iomem *dload_dest_addr;
 };
 
@@ -99,7 +102,9 @@ static int param_set_download_mode(const char *val,
 	if (ret)
 		return ret;
 
-	msm_enable_dump_mode(true);
+	msm_enable_dump_mode(enable_dump);
+	if (!enable_dump)
+		qcom_scm_disable_sdi();
 
 	return 0;
 }
@@ -280,12 +285,36 @@ static int qcom_dload_panic(struct notifier_block *this, unsigned long event,
 static int qcom_dload_restart(struct notifier_block *this, unsigned long event,
 			      void *ptr)
 {
-	char *cmd = ptr;
 
-	if (cmd && !strcmp(cmd, "edl")) {
-		set_download_mode(QCOM_DOWNLOAD_EDL);
-		reboot_mode = REBOOT_WARM;
+	struct qcom_dload *poweroff = container_of(this, struct qcom_dload,
+						   restart_nb);
+
+	if (!poweroff->in_panic && !poweroff->in_reboot) {
+		qcom_scm_disable_sdi();
+		set_download_mode(QCOM_DOWNLOAD_NODUMP);
 	}
+
+	return NOTIFY_OK;
+}
+
+static int qcom_dload_reboot(struct notifier_block *this, unsigned long event,
+			      void *ptr)
+{
+	char *cmd = ptr;
+	struct qcom_dload *poweroff = container_of(this, struct qcom_dload,
+						   reboot_nb);
+
+	poweroff->in_reboot = true;
+	set_download_mode(QCOM_DOWNLOAD_NODUMP);
+	if (cmd) {
+		if (!strcmp(cmd, "edl"))
+			set_download_mode(QCOM_DOWNLOAD_EDL);
+		else if (!strcmp(cmd, "qcom_dload"))
+			msm_enable_dump_mode(true);
+	}
+
+	if (current_download_mode != QCOM_DOWNLOAD_NODUMP)
+		reboot_mode = REBOOT_WARM;
 
 	return NOTIFY_OK;
 }
@@ -394,13 +423,17 @@ static int qcom_dload_probe(struct platform_device *pdev)
 	atomic_notifier_chain_register(&panic_notifier_list,
 				       &poweroff->panic_nb);
 
+	poweroff->reboot_nb.notifier_call = qcom_dload_reboot;
+	poweroff->reboot_nb.priority = 255;
+	register_reboot_notifier(&poweroff->reboot_nb);
+
 	poweroff->restart_nb.notifier_call = qcom_dload_restart;
 	/* Here, Restart handler priority should be higher than
 	 * of restart handler present in scm driver so that
 	 * reboot_mode set by this handler seen by SCM's one
 	 * for EDL mode.
 	 */
-	poweroff->restart_nb.priority = 131;
+	poweroff->restart_nb.priority = 201;
 	register_restart_handler(&poweroff->restart_nb);
 
 	platform_set_drvdata(pdev, poweroff);
@@ -414,7 +447,9 @@ static int qcom_dload_remove(struct platform_device *pdev)
 
 	atomic_notifier_chain_unregister(&panic_notifier_list,
 					 &poweroff->panic_nb);
+
 	unregister_restart_handler(&poweroff->restart_nb);
+	unregister_reboot_notifier(&poweroff->reboot_nb);
 
 	if (poweroff->dload_dest_addr)
 		iounmap(poweroff->dload_dest_addr);
