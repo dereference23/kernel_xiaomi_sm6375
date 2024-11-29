@@ -70,7 +70,7 @@ EXPORT_SYMBOL_GPL(null_dailink_component);
 
 #ifdef CONFIG_WT_QGKI
 static DEFINE_MUTEX(smartpa_mutex);
-static enum smartpa_type smartpa_type = PA_INVALID;
+static enum smartpa_type smartpa_type = PA_NODEV;
 module_param(smartpa_type, int, S_IRUSR | S_IRGRP | S_IROTH);
 MODULE_PARM_DESC(smartpa_type, "Show SmartPA type");
 #endif
@@ -2754,9 +2754,18 @@ void snd_soc_set_smartpa_type(const char *name, enum smartpa_type pa_type)
 		mutex_unlock(&smartpa_mutex);
 	} else {
 		pr_err("this PA is not supported\n");
+		mutex_lock(&smartpa_mutex);
+		smartpa_type = PA_INVALID;
+		mutex_unlock(&smartpa_mutex);
 	}
 }
 EXPORT_SYMBOL_GPL(snd_soc_set_smartpa_type);
+
+enum smartpa_type snd_soc_get_smartpa_type(void)
+{
+	return smartpa_type;
+}
+EXPORT_SYMBOL_GPL(snd_soc_get_smartpa_type);
 #endif
 
 #ifdef CONFIG_REGMAP
