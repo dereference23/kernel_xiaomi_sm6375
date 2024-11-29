@@ -6,6 +6,9 @@
 };
 
 &holi_snd {
+	qcom,aw88261-model = "holi-qrd-snd-card";
+	qcom,fs1962-model = "holi-qrdsku1-snd-card";
+
 	qcom,audio-routing =
 		"AMIC1", "Analog Mic1",
 		"Analog Mic1", "MIC BIAS1",
