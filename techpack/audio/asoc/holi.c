@@ -6624,6 +6624,37 @@ static int msm_asoc_parse_soundcard_name(struct platform_device *pdev,
 	u32 adsp_var_idx = 0;
 	int ret = 0;
 
+#ifdef CONFIG_WT_QGKI
+	const struct device_node* const np = card->dev->of_node;
+	const char *propname;
+
+	/*
+	 * snd_soc_of_parse_card_name() returns 0 even when the property
+	 * doesn't exist
+	 */
+	ret = -EINVAL;
+	switch (snd_soc_get_smartpa_type()) {
+	case AW88261:
+		propname = "qcom,aw88261-model";
+		if (of_find_property(np, propname, NULL))
+			ret = snd_soc_of_parse_card_name(card, propname);
+		break;
+	case FS1962:
+		propname = "qcom,fs1962-model";
+		if (of_find_property(np, propname, NULL))
+			ret = snd_soc_of_parse_card_name(card, propname);
+		break;
+	case PA_NODEV:
+		ret = -EPROBE_DEFER;
+		break;
+	default:
+		break;
+	}
+
+	if (!ret || ret == -EPROBE_DEFER)
+		return ret;
+#endif
+
 	/* get adsp variant idx */
 	cell = nvmem_cell_get(&pdev->dev, "adsp_variant");
 	if (IS_ERR_OR_NULL(cell)) {
