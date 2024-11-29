@@ -1440,6 +1440,7 @@ extern const struct dev_pm_ops snd_soc_pm_ops;
 
 #ifdef CONFIG_WT_QGKI
 enum smartpa_type {
+	PA_NODEV = -ENODEV,
 	PA_INVALID = -1,
 	FS16XX,
 	AW88261,
@@ -1449,6 +1450,7 @@ enum smartpa_type {
 };
 
 void snd_soc_set_smartpa_type(const char *name, enum smartpa_type pa_type);
+enum smartpa_type snd_soc_get_smartpa_type(void);
 #endif
 
 /* Helper functions */
