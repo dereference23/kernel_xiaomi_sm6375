@@ -98,7 +98,7 @@ struct ip_set_counter {
 
 struct ip_set_comment_rcu {
 	struct rcu_head rcu;
-	char str[];
+	char str[0];
 };
 
 struct ip_set_comment {
