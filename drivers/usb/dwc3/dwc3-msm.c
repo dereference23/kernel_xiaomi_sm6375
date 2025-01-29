@@ -288,13 +288,6 @@ static const char *const state_names[] = {
 	[DRD_STATE_HOST] = "host",
 };
 
-static const char *const usb_dr_modes[] = {
-	[USB_DR_MODE_UNKNOWN]		= "",
-	[USB_DR_MODE_HOST]		= "host",
-	[USB_DR_MODE_PERIPHERAL]	= "peripheral",
-	[USB_DR_MODE_OTG]		= "otg",
-};
-
 static const char *dwc3_drd_state_string(enum dwc3_drd_state state)
 {
 	if (state < 0 || state >= ARRAY_SIZE(state_names))
@@ -482,7 +475,6 @@ struct dwc3_msm {
 	unsigned long		inputs;
 	unsigned int		max_power;
 	enum dwc3_drd_state	drd_state;
-	enum usb_dr_mode	dr_mode;
 	enum bus_vote		default_bus_vote;
 	enum bus_vote		override_bus_vote;
 	struct icc_path		*icc_paths[3];
@@ -2295,7 +2287,7 @@ static void dwc3_restart_usb_work(struct work_struct *w)
 
 	dev_dbg(mdwc->dev, "%s\n", __func__);
 
-	if (atomic_read(&dwc->in_lpm) || mdwc->dr_mode != USB_DR_MODE_OTG) {
+	if (atomic_read(&dwc->in_lpm) || dwc->dr_mode != USB_DR_MODE_OTG) {
 		dev_dbg(mdwc->dev, "%s failed!!!\n", __func__);
 		return;
 	}
@@ -3249,7 +3241,7 @@ static int dwc3_msm_suspend(struct dwc3_msm *mdwc, bool force_power_collapse,
 		}
 	}
 
-	if (!mdwc->vbus_active && mdwc->dr_mode == USB_DR_MODE_OTG &&
+	if (!mdwc->vbus_active && dwc->dr_mode == USB_DR_MODE_OTG &&
 		mdwc->drd_state == DRD_STATE_PERIPHERAL) {
 		/*
 		 * In some cases, the pm_runtime_suspend may be called by
@@ -3272,7 +3264,7 @@ static int dwc3_msm_suspend(struct dwc3_msm *mdwc, bool force_power_collapse,
 	 * then check controller state of L2 and break
 	 * LPM sequence. Check this for device bus suspend case.
 	 */
-	if ((mdwc->dr_mode == USB_DR_MODE_OTG &&
+	if ((dwc->dr_mode == USB_DR_MODE_OTG &&
 			mdwc->drd_state == DRD_STATE_PERIPHERAL_SUSPEND) &&
 			(dwc->gadget.state != USB_STATE_CONFIGURED)) {
 		pr_err("%s(): Trying to go in LPM with state:%d\n",
@@ -4135,7 +4127,7 @@ static int dwc3_msm_vbus_notifier(struct notifier_block *nb,
 	}
 
 	mdwc->ext_idx = enb->idx;
-	if (mdwc->dr_mode == USB_DR_MODE_OTG && !mdwc->in_restart)
+	if (dwc->dr_mode == USB_DR_MODE_OTG && !mdwc->in_restart)
 		queue_work(mdwc->dwc3_wq, &mdwc->resume_work);
 
 	return NOTIFY_DONE;
@@ -4215,14 +4207,15 @@ static inline const char *usb_role_string(enum usb_role role)
 
 static bool dwc3_msm_role_allowed(struct dwc3_msm *mdwc, enum usb_role role)
 {
-	dev_dbg(mdwc->dev, "%s: dr_mode=%s role_requested=%s\n",
-		__func__, usb_dr_modes[mdwc->dr_mode],
+	struct dwc3 *dwc = platform_get_drvdata(mdwc->dwc3);
+	dev_dbg(mdwc->dev, "%s: dr_mode=%d role_requested=%s\n",
+		__func__, (int) dwc->dr_mode,
 		usb_role_string(role));
 
-	if (role == USB_ROLE_HOST && mdwc->dr_mode == USB_DR_MODE_PERIPHERAL)
+	if (role == USB_ROLE_HOST && dwc->dr_mode == USB_DR_MODE_PERIPHERAL)
 		return false;
 
-	if (role == USB_ROLE_DEVICE && mdwc->dr_mode == USB_DR_MODE_HOST)
+	if (role == USB_ROLE_DEVICE && dwc->dr_mode == USB_DR_MODE_HOST)
 		return false;
 
 	if (!mdwc->usb_data_enabled && role != USB_ROLE_NONE)
@@ -4731,7 +4724,6 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 	struct dwc3_msm *mdwc;
 	struct dwc3	*dwc;
 	struct resource *res;
-	const char *prop_string;
 	int ret = 0, size = 0, i;
 	u32 val;
 
@@ -4887,11 +4879,6 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 		ret = -ENODEV;
 		goto err;
 	}
-
-	ret = of_property_read_string(node, "dr_mode", &prop_string);
-	if (!ret)
-		ret = match_string(usb_dr_modes, ARRAY_SIZE(usb_dr_modes), prop_string);
-	mdwc->dr_mode = (ret < 0) ? USB_DR_MODE_UNKNOWN : ret;
 
 	ret = of_platform_populate(node, NULL, NULL, &pdev->dev);
 	if (ret) {
@@ -5057,7 +5044,7 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 		mdwc->pm_qos_latency = 0;
 	}
 
-	if (mdwc->dual_port && mdwc->dr_mode != USB_DR_MODE_HOST) {
+	if (mdwc->dual_port && dwc->dr_mode != USB_DR_MODE_HOST) {
 		dev_err(&pdev->dev, "Dual port not allowed for DRD core\n");
 		goto put_dwc3;
 	}
@@ -5122,7 +5109,7 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 	}
 
 	if (!mdwc->role_switch && !mdwc->extcon) {
-		switch (mdwc->dr_mode) {
+		switch (dwc->dr_mode) {
 		case USB_DR_MODE_OTG:
 			if (of_property_read_bool(node,
 						"qcom,default-mode-host")) {
