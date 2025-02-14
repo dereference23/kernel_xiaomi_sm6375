@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef _WCD934X_REGISTERS_H
@@ -1836,5 +1837,6 @@ enum {
 #define WCD934X_SLIM_PGD_PORT_INT_CLR_TX_1                   (0x3B)
 #define WCD934X_SLIM_PGD_PORT_INT_RX_SOURCE0                 (0x60)
 #define WCD934X_SLIM_PGD_PORT_INT_TX_SOURCE0                 (0x70)
+#define WCD934X_SLIM_PGD_PORT_TX_OR_UR_CFG_0                 (0x1F0)
 
 #endif
