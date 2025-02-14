@@ -2021,7 +2021,7 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 
 	if (extn_elem && extn_elem[TAG_LEN_POS] >= VALID_ELEM_LEAST_LEN) {
 		if (((extn_elem + extn_elem[1] + MIN_IE_LEN) - sub_copy)
-		    < subie_len)
+		    <= subie_len)
 			util_parse_noninheritance_list(extn_elem, &elem_list,
 						       &extn_elem_list, &ninh);
 	}
@@ -2163,7 +2163,7 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 	tmp_new = sub_copy;
 	while ((subie_len > 0) &&
 	       (((tmp_new + tmp_new[1] + MIN_IE_LEN) - sub_copy) <=
-		(subie_len - 1))) {
+		subie_len)) {
 		if (!(tmp_new[0] == WLAN_ELEMID_NONTX_BSSID_CAP ||
 		      tmp_new[0] == WLAN_ELEMID_SSID ||
 		      tmp_new[0] == WLAN_ELEMID_MULTI_BSSID_IDX ||
