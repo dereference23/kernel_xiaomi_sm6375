@@ -6933,19 +6933,11 @@ static void ipa3_load_ipa_fw(struct work_struct *work)
 			 * using different signing images, adding support to
 			 * load specific FW image to based on dt entry.
 			 */
-#if IS_ENABLED(CONFIG_QCOM_MDT_LOADER)
-			if (ipa3_ctx->gsi_fw_file_name)
-				result = ipa3_mdt_load_ipa_fws(
-							ipa3_ctx->gsi_fw_file_name);
-			else
-				result = ipa3_mdt_load_ipa_fws(IPA_SUBSYSTEM_NAME);
-#else /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 			if (ipa3_ctx->gsi_fw_file_name)
 				result = ipa3_pil_load_ipa_fws(
 							ipa3_ctx->gsi_fw_file_name);
 			else
 				result = ipa3_pil_load_ipa_fws(IPA_SUBSYSTEM_NAME);
-#endif /* IS_ENABLED(CONFIG_QCOM_MDT_LOADER) */
 		} else {
 			result = ipa3_manual_load_ipa_fws();
 		}
