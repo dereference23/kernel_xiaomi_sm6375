@@ -334,10 +334,12 @@ unsigned long move_page_tables(struct vm_area_struct *vma,
 			 */
 			bool moved;
 
-			take_rmap_locks(vma);
+			if (need_rmap_locks)
+				take_rmap_locks(vma);
 			moved = move_normal_pmd(vma, old_addr, new_addr,
 					old_end, old_pmd, new_pmd);
-			drop_rmap_locks(vma);
+			if (need_rmap_locks)
+				drop_rmap_locks(vma);
 			if (moved)
 				continue;
 #endif
