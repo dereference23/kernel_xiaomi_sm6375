@@ -217,4 +217,13 @@ config AQFWD_IOSS
 	  aqc_ioss.
 	  If unsure, say N.
 
+config USB_R8152_RTL
+	tristate "Realtek R8152 driver"
+	help
+		This option adds support for Realtek RTL8152 based USB to
+		Ethernet adapter.
+
+		To compile this driver as a module, choose M here: the module
+		will be called r8152_rtl. If unsure, say N.
+
 endmenu
