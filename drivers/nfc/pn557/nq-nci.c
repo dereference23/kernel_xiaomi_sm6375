@@ -1101,15 +1101,7 @@ static int nfc_parse_dt(struct device *dev, struct nqx_platform_data *pdata)
 {
 	int r = 0;
 	struct device_node *np = dev->of_node;
-#ifdef CONFIG_WT_QGKI
-        if (strstr(saved_command_line,"hwlevel=P0.1")) {
 	pdata->en_gpio = of_get_named_gpio(np, "qcom,sn-ven", 0);
-        }else {
-	 pdata->en_gpio = of_get_named_gpio(np, "qcom,sn-pnven", 0);
-        }
-#else
-	  pdata->en_gpio = of_get_named_gpio(np, "qcom,sn-pnven", 0);
-#endif
 	if ((!gpio_is_valid(pdata->en_gpio)))
 		return -EINVAL;
 	disable_ctrl = pdata->en_gpio;
