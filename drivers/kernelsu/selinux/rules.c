@@ -24,10 +24,10 @@ static struct policydb *get_policydb(void)
 // selinux_state does not exists before 4.19
 #ifdef KSU_COMPAT_USE_SELINUX_STATE
 #ifdef SELINUX_POLICY_INSTEAD_SELINUX_SS
-	struct selinux_policy *policy = rcu_dereference(selinux_state.policy);
+	struct selinux_policy *policy = selinux_state.policy;
 	db = &policy->policydb;
 #else
-	struct selinux_ss *ss = rcu_dereference(selinux_state.ss);
+	struct selinux_ss *ss = selinux_state.ss;
 	db = &ss->policydb;
 #endif
 #else
@@ -202,6 +202,8 @@ static void reset_avc_cache()
 
 int handle_sepolicy(unsigned long arg3, void __user *arg4)
 {
+	struct policydb *db;
+
 	if (!arg4) {
 		return -1;
 	}
@@ -219,9 +221,9 @@ int handle_sepolicy(unsigned long arg3, void __user *arg4)
 	u32 cmd = data.cmd;
 	u32 subcmd = data.subcmd;
 
-	rcu_read_lock();
+	mutex_lock(&ksu_rules);
 
-	struct policydb *db = get_policydb();
+	db = get_policydb();
 
 	int ret = -1;
 	if (cmd == CMD_NORMAL_PERM) {
@@ -471,7 +473,7 @@ int handle_sepolicy(unsigned long arg3, void __user *arg4)
 	}
 
 exit:
-	rcu_read_unlock();
+	mutex_unlock(&ksu_rules);
 
 	// only allow and xallow needs to reset avc cache, but we cannot do that because
 	// we are in atomic context. so we just reset it every time.
