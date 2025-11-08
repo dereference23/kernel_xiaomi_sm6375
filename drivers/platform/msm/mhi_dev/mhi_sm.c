@@ -96,12 +96,6 @@ static inline const char *mhi_sm_mstate_str(enum mhi_dev_state state)
 
 	return str;
 }
-enum mhi_sm_ep_pcie_state {
-	MHI_SM_EP_PCIE_LINK_DISABLE,
-	MHI_SM_EP_PCIE_D0_STATE,
-	MHI_SM_EP_PCIE_D3_HOT_STATE,
-	MHI_SM_EP_PCIE_D3_COLD_STATE,
-};
 
 static inline const char *mhi_sm_dstate_str(enum mhi_sm_ep_pcie_state state)
 {
@@ -1106,8 +1100,6 @@ unlock_and_exit:
 int mhi_dev_sm_init(struct mhi_dev *mhi_dev)
 {
 	int res;
-	enum ep_pcie_link_status link_state;
-
 	MHI_SM_FUNC_ENTRY();
 
 	if (!mhi_dev) {
@@ -1137,11 +1129,7 @@ int mhi_dev_sm_init(struct mhi_dev *mhi_dev)
 	atomic_set(&mhi_sm_ctx->pending_device_events, 0);
 	atomic_set(&mhi_sm_ctx->pending_pcie_events, 0);
 
-	link_state = ep_pcie_get_linkstatus(mhi_sm_ctx->mhi_dev->phandle);
-	if (link_state == EP_PCIE_LINK_ENABLED)
-		mhi_sm_ctx->d_state = MHI_SM_EP_PCIE_D0_STATE;
-	else
-		mhi_sm_ctx->d_state = MHI_SM_EP_PCIE_LINK_DISABLE;
+	mhi_sm_ctx->d_state = MHI_SM_EP_PCIE_D0_STATE;
 
 	MHI_SM_FUNC_EXIT();
 	return 0;
@@ -1238,16 +1226,7 @@ int mhi_dev_sm_set_ready(void)
 		goto unlock_and_exit;
 	}
 
-	if (mhi_sm_ctx->d_state != MHI_SM_EP_PCIE_D0_STATE) {
-		if (ep_pcie_get_linkstatus(mhi_sm_ctx->mhi_dev->phandle) ==
-		    EP_PCIE_LINK_ENABLED) {
-			mhi_sm_ctx->d_state = MHI_SM_EP_PCIE_D0_STATE;
-		} else {
-			MHI_SM_ERR("ERROR: ep-pcie link is not enabled\n");
-			res = -EPERM;
-			goto unlock_and_exit;
-		}
-	}
+	mhi_sm_ctx->d_state = MHI_SM_EP_PCIE_D0_STATE;
 
 	/* verify that MHISTATUS is configured to RESET*/
 	mhi_dev_mmio_masked_read(mhi_sm_ctx->mhi_dev,

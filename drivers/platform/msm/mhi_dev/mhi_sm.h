@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2015,2017-2018,2020 The Linux Foundation. All rights reserved.*/
+/* Copyright (c) 2015,2017-2018,2020-2021 The Linux Foundation. All rights reserved.*/
 
 #ifndef MHI_SM_H
 #define MHI_SM_H
@@ -29,6 +29,13 @@ enum mhi_dev_event {
 	MHI_DEV_EVENT_HW_ACC_WAKEUP,
 	MHI_DEV_EVENT_CORE_WAKEUP,
 	MHI_DEV_EVENT_MAX
+};
+
+enum mhi_sm_ep_pcie_state {
+	MHI_SM_EP_PCIE_LINK_DISABLE,
+	MHI_SM_EP_PCIE_D0_STATE,
+	MHI_SM_EP_PCIE_D3_HOT_STATE,
+	MHI_SM_EP_PCIE_D3_COLD_STATE,
 };
 
 int mhi_dev_sm_init(struct mhi_dev *dev);
