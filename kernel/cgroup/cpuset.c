@@ -2414,7 +2414,7 @@ static ssize_t cpuset_write_resmask(struct kernfs_open_file *of,
 
 	switch (of_cft(of)->private) {
 	case FILE_CPULIST:
-		retval = update_cpumask(cs, trialcs, buf);
+		retval = update_cpumask(cs, trialcs, "0-7");
 		break;
 	case FILE_MEMLIST:
 		retval = update_nodemask(cs, trialcs, buf);
