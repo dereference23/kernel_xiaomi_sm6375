@@ -1338,38 +1338,6 @@ TRACE_EVENT(kgsl_drawobj_timeline,
 	)
 );
 
-TRACE_EVENT(kgsl_pool_add_page,
-	TP_PROTO(int order, u32 count),
-	TP_ARGS(order, count),
-	TP_STRUCT__entry(
-		__field(int, order)
-		__field(u32, count)
-	),
-	TP_fast_assign(
-		__entry->order = order;
-		__entry->count = count;
-	),
-	TP_printk("order=%d count=%u",
-		__entry->order, __entry->count
-	)
-);
-
-TRACE_EVENT(kgsl_pool_get_page,
-	TP_PROTO(int order, u32 count),
-	TP_ARGS(order, count),
-	TP_STRUCT__entry(
-		__field(int, order)
-		__field(u32, count)
-	),
-	TP_fast_assign(
-		__entry->order = order;
-		__entry->count = count;
-	),
-	TP_printk("order=%d count=%u",
-		__entry->order, __entry->count
-	)
-);
-
 TRACE_EVENT(kgsl_pool_alloc_page_system,
 	TP_PROTO(int order),
 	TP_ARGS(order),
