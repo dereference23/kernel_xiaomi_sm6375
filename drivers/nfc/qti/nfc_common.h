@@ -70,7 +70,7 @@
 #define MAX_BUFFER_SIZE			(558)
 
 // Maximum retry count for standby writes
-#define MAX_RETRY_COUNT			(3)
+#define MAX_RETRY_COUNT			(5)
 
 // Retry count for normal write
 #define NO_RETRY				(1)
