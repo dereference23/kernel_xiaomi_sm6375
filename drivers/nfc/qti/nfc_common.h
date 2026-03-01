@@ -89,6 +89,7 @@
 
 #define DTS_IRQ_GPIO_STR	"qcom,sn-irq"
 #define DTS_VEN_GPIO_STR	"qcom,sn-ven"
+#define DTS_PNVEN_GPIO_STR	"qcom,sn-pnven"
 #define DTS_FWDN_GPIO_STR	"qcom,sn-firm"
 #define DTS_CLKREQ_GPIO_STR	"qcom,sn-clkreq"
 #define DTS_CLKSRC_GPIO_STR	"qcom,clk-src"
@@ -192,6 +193,7 @@ enum nfcc_chip_variant {
 struct platform_gpio {
 	unsigned int irq;
 	unsigned int ven;
+	unsigned int pnven;
 	unsigned int clkreq;
 	unsigned int dwl_req;
 };
