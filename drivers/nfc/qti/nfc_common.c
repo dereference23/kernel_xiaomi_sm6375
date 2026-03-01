@@ -8,6 +8,7 @@
 #include <linux/delay.h>
 #include "nfc_common.h"
 
+static bool ven_gpio_retry;
 
 int nfc_parse_dt(struct device *dev, struct platform_gpio *nfc_gpio,
 		 struct platform_ldo *ldo, uint8_t interface)
@@ -34,6 +35,12 @@ int nfc_parse_dt(struct device *dev, struct platform_gpio *nfc_gpio,
 		pr_err("nfc ven gpio invalid %d\n", nfc_gpio->ven);
 		return -EINVAL;
 	}
+
+	nfc_gpio->pnven = of_get_named_gpio(np, DTS_PNVEN_GPIO_STR, 0);
+	if ((!gpio_is_valid(nfc_gpio->pnven))) {
+		pr_err("nfc pnven gpio invalid %d\n", nfc_gpio->pnven);
+	} else if (ven_gpio_retry)
+		nfc_gpio->ven = nfc_gpio->pnven;
 
 	nfc_gpio->dwl_req = of_get_named_gpio(np, DTS_FWDN_GPIO_STR, 0);
 	if ((!gpio_is_valid(nfc_gpio->dwl_req))) {
@@ -961,7 +968,12 @@ err_nfcc_hw_check:
 
 	gpio_set_value(nfc_dev->gpio.dwl_req, 0);
 
-	ret = -ENXIO;
+	if (!ven_gpio_retry) {
+		ret = -EPROBE_DEFER;
+		ven_gpio_retry = true;
+	} else
+		ret = -ENXIO;
+
 	pr_debug("%s: - NFCC HW not available\n", __func__);
 
 disable_i3c_intr:
