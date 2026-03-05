@@ -38,6 +38,11 @@
 
 #include <trace/hooks/dtask.h>
 
+#ifndef CONFIG_DEBUG_KERNEL
+#undef noinline
+#define noinline
+#endif
+
 void
 __mutex_init(struct mutex *lock, const char *name, struct lock_class_key *key)
 {

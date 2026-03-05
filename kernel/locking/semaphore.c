@@ -34,6 +34,11 @@
 #include <linux/spinlock.h>
 #include <linux/ftrace.h>
 
+#ifndef CONFIG_DEBUG_KERNEL
+#undef noinline
+#define noinline
+#endif
+
 static noinline void __down(struct semaphore *sem);
 static noinline int __down_interruptible(struct semaphore *sem);
 static noinline int __down_killable(struct semaphore *sem);
