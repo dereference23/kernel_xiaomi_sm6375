@@ -2462,6 +2462,8 @@ int icnss_qmi_send(struct device *dev, int type, void *cmd,
 }
 EXPORT_SYMBOL(icnss_qmi_send);
 
+struct icnss_driver_ops *delayed;
+
 int __icnss_register_driver(struct icnss_driver_ops *ops,
 			    struct module *owner, const char *mod_name)
 {
@@ -2469,11 +2471,12 @@ int __icnss_register_driver(struct icnss_driver_ops *ops,
 	struct icnss_priv *priv = icnss_get_plat_priv();
 
 	if (!priv || !priv->pdev) {
-		ret = -ENODEV;
+		icnss_pr_info("Delaying driver registration\n");
+		delayed = ops;
 		goto out;
 	}
 
-	icnss_pr_dbg("Registering driver, state: 0x%lx\n", priv->state);
+	icnss_pr_info("Registering driver, state: 0x%lx\n", priv->state);
 
 	if (priv->ops) {
 		icnss_pr_err("Driver already registered\n");
@@ -4142,6 +4145,9 @@ static int icnss_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&priv->icnss_tcdev_list);
 
 	icnss_pr_info("Platform driver probed successfully\n");
+
+	if (delayed)
+		__icnss_register_driver(delayed, NULL, NULL);
 
 	return 0;
 
