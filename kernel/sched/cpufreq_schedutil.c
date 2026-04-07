@@ -808,7 +808,7 @@ static int sugov_init(struct cpufreq_policy *policy)
 		goto stop_kthread;
 	}
 
-	tunables->rate_limit_us = cpufreq_policy_transition_delay_us(policy);
+	tunables->rate_limit_us = 0;
 	tunables->iowait_boost_enable = false;
 
 	policy->governor_data = sg_policy;
