@@ -1454,7 +1454,7 @@ static void tun_flow_uninit(struct tun_struct *tun)
 }
 
 #define MIN_MTU 68
-#define MAX_MTU 65535
+#define MAX_MTU 65536
 
 /* Initialize net device. */
 static void tun_net_initialize(struct net_device *dev)
