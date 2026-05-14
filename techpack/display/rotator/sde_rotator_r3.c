@@ -1419,14 +1419,14 @@ static void sde_hw_rotator_vbif_rt_setting(void)
 		for (j = 0; j < MAX_XIN; j++) {
 			reg_high = ((mdata->vbif_xin_id[j]
 						& 0x8) >> 3) * 4 + (i * 8);
-			reg_shift = mdata->vbif_xin_id[j] * 4;
+			reg_shift = (mdata->vbif_xin_id[j] & 0x7) * 4;
 
 			reg_val = SDE_VBIF_READ(mdata,
 			MMSS_VBIF_NRT_VBIF_QOS_RP_REMAP_000 + reg_high);
 			reg_val_lvl = SDE_VBIF_READ(mdata,
 			MMSS_VBIF_NRT_VBIF_QOS_LVL_REMAP_000 + reg_high);
 
-			mask = 0x7 << (mdata->vbif_xin_id[j] * 4);
+			mask = 0x7 << reg_shift;
 
 			vbif_qos = mdata->vbif_nrt_qos[i];
 
