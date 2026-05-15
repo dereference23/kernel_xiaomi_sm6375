@@ -3486,9 +3486,9 @@ static int batt_chg_probe(struct platform_device *pdev)
 		goto cleanup;
 	}
 
-	INIT_DELAYED_WORK(&batt_chg->batt_chg_work, batt_chg_main);
-	INIT_DELAYED_WORK(&batt_chg->usb_therm_work, usb_therm);
-	INIT_DELAYED_WORK(&batt_chg->usb_type_work, batt_usb_type);
+	INIT_DEFERRABLE_WORK(&batt_chg->batt_chg_work, batt_chg_main);
+	INIT_DEFERRABLE_WORK(&batt_chg->usb_therm_work, usb_therm);
+	INIT_DEFERRABLE_WORK(&batt_chg->usb_type_work, batt_usb_type);
 
 	batt_chg->wt_ws = wakeup_source_register(batt_chg->dev, "charge_wakeup");
 	if (!batt_chg->wt_ws) {
@@ -3497,8 +3497,8 @@ static int batt_chg_probe(struct platform_device *pdev)
 	}
 
 	schedule_delayed_work(&batt_chg->batt_chg_work, 0);
-	INIT_DELAYED_WORK( &batt_chg->xm_prop_change_work, generate_xm_charge_uvent);
-	INIT_DELAYED_WORK( &batt_chg->charger_debug_info_print_work, xm_charger_debug_info_print_work);
+	INIT_DEFERRABLE_WORK( &batt_chg->xm_prop_change_work, generate_xm_charge_uvent);
+	INIT_DEFERRABLE_WORK( &batt_chg->charger_debug_info_print_work, xm_charger_debug_info_print_work);
 	schedule_delayed_work(&batt_chg->charger_debug_info_print_work, 30 * HZ);
 	schedule_delayed_work(&batt_chg->xm_prop_change_work, msecs_to_jiffies(30000));
 	schedule_delayed_work(&batt_chg->usb_therm_work, msecs_to_jiffies(10000));
