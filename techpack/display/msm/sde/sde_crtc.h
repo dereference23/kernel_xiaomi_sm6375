@@ -519,7 +519,8 @@ static inline int sde_crtc_get_mixer_width(struct sde_crtc *sde_crtc,
 	if (cstate->num_ds_enabled)
 		mixer_width = cstate->ds_cfg[0].lm_width;
 	else
-		mixer_width = mode->hdisplay / sde_crtc->num_mixers;
+		mixer_width = sde_crtc->num_mixers ?
+			mode->hdisplay / sde_crtc->num_mixers : mode->hdisplay;
 
 	return mixer_width;
 }
