@@ -416,6 +416,12 @@ static int memlat_idle_read_events(unsigned int cpu)
 		if (mon->miss_ev[idx].pevent)
 			ret = perf_event_read_local(mon->miss_ev[idx].pevent,
 			&mon->miss_ev[idx].cached_total_count, NULL, NULL);
+		if (mon->wb_ev && mon->wb_ev[idx].pevent)
+			ret = perf_event_read_local(mon->wb_ev[idx].pevent,
+			&mon->wb_ev[idx].cached_total_count, NULL, NULL);
+		if (mon->access_ev && mon->access_ev[idx].pevent)
+			ret = perf_event_read_local(mon->access_ev[idx].pevent,
+			&mon->access_ev[idx].cached_total_count, NULL, NULL);
 	}
 exit:
 	spin_unlock_irqrestore(&cpu_grp->mon_active_lock, flags);
@@ -468,8 +474,30 @@ static int memlat_hp_restart_events(unsigned int cpu, bool cpu_up)
 					mon->miss_ev[idx], cpu, ret);
 				goto exit;
 			}
+
+			if (mon->access_ev && mon->wb_ev) {
+				ret = set_event(&mon->access_ev[idx], cpu,
+						mon->access_ev_id, attr);
+				if (ret) {
+					pr_err("event %d not set for cpu %d ret %d\n",
+						mon->access_ev[idx], cpu, ret);
+					goto exit;
+				}
+
+				ret = set_event(&mon->wb_ev[idx], cpu,
+						mon->wb_ev_id, attr);
+				if (ret) {
+					pr_err("event %d not set for cpu %d ret %d\n",
+						mon->wb_ev[idx], cpu, ret);
+					goto exit;
+				}
+			}
 		} else {
 			delete_event(&mon->miss_ev[idx]);
+			if (mon->wb_ev)
+				delete_event(&mon->wb_ev[idx]);
+			if (mon->access_ev)
+				delete_event(&mon->access_ev[idx]);
 		}
 	}
 
