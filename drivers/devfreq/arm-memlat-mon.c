@@ -194,18 +194,20 @@ static void update_counts(struct memlat_cpu_grp *cpu_grp)
 	for_each_cpu(cpu, &cpu_grp->cpus) {
 		struct cpu_data *cpu_data = to_cpu_data(cpu_grp, cpu);
 		struct event_data *common_evs = cpu_data->common_evs;
+		unsigned long cyc_cnt, stall_cnt;
 
 		for (i = 0; i < NUM_COMMON_EVS; i++)
 			read_event(&common_evs[i]);
 
-		if (!common_evs[STALL_IDX].pevent)
-			common_evs[STALL_IDX].last_delta =
-				common_evs[CYC_IDX].last_delta;
-
-		cpu_data->freq = common_evs[CYC_IDX].last_delta / delta;
-		cpu_data->stall_pct = mult_frac(100,
-				common_evs[STALL_IDX].last_delta,
-				common_evs[CYC_IDX].last_delta);
+		cyc_cnt = common_evs[CYC_IDX].last_delta;
+		cpu_data->freq = delta ? cyc_cnt / delta : cyc_cnt;
+		if (common_evs[STALL_IDX].pevent) {
+			stall_cnt = common_evs[STALL_IDX].last_delta;
+			stall_cnt = min(stall_cnt, cyc_cnt);
+			cpu_data->stall_pct = mult_frac(100, stall_cnt, cyc_cnt);
+		} else {
+			cpu_data->stall_pct = 100;
+		}
 	}
 
 	for (i = 0; i < cpu_grp->num_mons; i++) {
@@ -238,6 +240,7 @@ static unsigned long get_cnt(struct memlat_hwmon *hw)
 		unsigned int mon_idx =
 			cpu - cpumask_first(&mon->cpus);
 		struct dev_stats *devstats = to_devstats(mon, cpu);
+		unsigned long access_cnt, wb_cnt;
 
 		devstats->freq = cpu_data->freq;
 		devstats->stall_pct = cpu_data->stall_pct;
@@ -252,12 +255,14 @@ static unsigned long get_cnt(struct memlat_hwmon *hw)
 			devstats->mem_count = 1;
 		}
 
-		if (mon->access_ev_id && mon->wb_ev_id)
-			devstats->wb_pct =
-				mult_frac(100, mon->wb_ev[mon_idx].last_delta,
-					  mon->access_ev[mon_idx].last_delta);
-		else
+		if (mon->access_ev_id && mon->wb_ev_id) {
+			access_cnt =  mon->access_ev[mon_idx].last_delta;
+			wb_cnt = mon->wb_ev[mon_idx].last_delta;
+			wb_cnt = min(wb_cnt, access_cnt);
+			devstats->wb_pct = mult_frac(100, wb_cnt, access_cnt);
+		} else {
 			devstats->wb_pct = 0;
+		}
 	}
 
 	return 0;
