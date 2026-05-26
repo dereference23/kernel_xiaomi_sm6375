@@ -658,7 +658,7 @@ static int start_hwmon(struct memlat_hwmon *hw)
 	mon->is_active = true;
 	spin_unlock_irqrestore(&cpu_grp->mon_active_lock, flags);
 
-
+	update_counts(cpu_grp);
 	if (should_init_cpu_grp)
 		queue_delayed_work(memlat_wq, &cpu_grp->work,
 				   msecs_to_jiffies(cpu_grp->update_ms));
