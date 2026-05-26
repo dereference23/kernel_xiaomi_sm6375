@@ -114,9 +114,6 @@ struct memlat_mon {
  *				event_data of all the events all mons need as
  *				well as common computed cpu data like freq.
  * @last_update_ts:		Used to avoid redundant reads.
- * @last_ts_delta_us:		The time difference between the most recent
- *				update and the one before that. Used to compute
- *				effective frequency.
  * @work:			The delayed_work used for handling updates.
  * @update_ms:			The frequency with which @work triggers.
  * @num_mons:		The number of @mons for this cpu_grp.
@@ -133,7 +130,6 @@ struct memlat_cpu_grp {
 	unsigned int		common_ev_ids[NUM_COMMON_EVS];
 	struct cpu_data		*cpus_data;
 	ktime_t			last_update_ts;
-	unsigned long		last_ts_delta_us;
 
 	struct delayed_work	work;
 	unsigned int		update_ms;
@@ -193,7 +189,6 @@ static void update_counts(struct memlat_cpu_grp *cpu_grp)
 	ktime_t now = ktime_get();
 	unsigned long delta = ktime_us_delta(now, cpu_grp->last_update_ts);
 
-	cpu_grp->last_ts_delta_us = delta;
 	cpu_grp->last_update_ts = now;
 
 	for_each_cpu(cpu, &cpu_grp->cpus) {
