@@ -375,8 +375,8 @@ static int cam_ife_match_vc_dt_pair(int32_t *vc, uint32_t *dt,
 		return -EINVAL;
 	}
 
-	if ((camera_hw_version != CAM_CPAS_TITAN_480_V100) ||
-		(camera_hw_version != CAM_CPAS_TITAN_580_V100) ||
+	if ((camera_hw_version != CAM_CPAS_TITAN_480_V100) &&
+		(camera_hw_version != CAM_CPAS_TITAN_580_V100) &&
 		(camera_hw_version != CAM_CPAS_TITAN_570_V200))
 		num_valid_vc_dt = 1;
 
