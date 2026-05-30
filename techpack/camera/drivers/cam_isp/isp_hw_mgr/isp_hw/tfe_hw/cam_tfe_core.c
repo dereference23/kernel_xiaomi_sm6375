@@ -2194,7 +2194,7 @@ int cam_tfe_top_start(struct cam_tfe_hw_core_info *core_info,
 
 	if (in_res->res_id == CAM_ISP_HW_TFE_IN_CAMIF) {
 		cam_tfe_camif_resource_start(core_info, in_res);
-	} else if (in_res->res_id >= CAM_ISP_HW_TFE_IN_RDI0 ||
+	} else if (in_res->res_id >= CAM_ISP_HW_TFE_IN_RDI0 &&
 		in_res->res_id <= CAM_ISP_HW_TFE_IN_RDI2) {
 		rsrc_rdi_data = (struct cam_tfe_rdi_data *) in_res->res_priv;
 		val = (rsrc_rdi_data->pix_pattern <<
