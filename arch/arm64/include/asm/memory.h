@@ -312,23 +312,21 @@ static inline void *phys_to_virt(phys_addr_t x)
 #define virt_to_pfn(x)		__phys_to_pfn(__virt_to_phys((unsigned long)(x)))
 #define sym_to_pfn(x)		__phys_to_pfn(__pa_symbol(x))
 
+#ifdef CONFIG_CFI_CLANG
 /*
- * With non-canonical CFI jump tables, the compiler replaces function
- * address references with the address of the function's CFI jump
- * table entry. This results in __pa_symbol(function) returning the
- * physical address of the jump table entry, which can lead to address
- * space confusion since the jump table points to the function's
- * virtual address. Therefore, use inline assembly to ensure we are
- * always taking the address of the actual function.
+ * With CONFIG_CFI_CLANG, the compiler replaces function address
+ * references with the address of the function's CFI jump table
+ * entry. The function_nocfi macro always returns the address of the
+ * actual function instead.
  */
-#define __va_function(x) ({						\
+#define function_nocfi(x) ({						\
 	void *addr;							\
 	asm("adrp %0, " __stringify(x) "\n\t"				\
-	    "add  %0, %0, :lo12:" __stringify(x) : "=r" (addr));	\
+	    "add  %0, %0, :lo12:" __stringify(x)			\
+	    : "=r" (addr));						\
 	addr;								\
 })
-
-#define __pa_function(x) 	__pa_symbol(__va_function(x))
+#endif
 
 /*
  *  virt_to_page(x)	convert a _valid_ virtual address to struct page *

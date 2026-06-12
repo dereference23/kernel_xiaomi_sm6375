@@ -119,20 +119,22 @@ extern int mmap_rnd_compat_bits __read_mostly;
 #define __pa_symbol(x)  __pa(RELOC_HIDE((unsigned long)(x), 0))
 #endif
 
-#ifndef __va_function
-#define __va_function(x) (x)
-#endif
-
-#ifndef __pa_function
-#define __pa_function(x) __pa_symbol(x)
-#endif
-
 #ifndef page_to_virt
 #define page_to_virt(x)	__va(PFN_PHYS(page_to_pfn(x)))
 #endif
 
 #ifndef lm_alias
 #define lm_alias(x)	__va(__pa_symbol(x))
+#endif
+
+/*
+ * With CONFIG_CFI_CLANG, the compiler replaces function addresses in
+ * instrumented C code with jump table addresses. Architectures that
+ * support CFI can define this macro to return the actual function address
+ * when needed.
+ */
+#ifndef function_nocfi
+#define function_nocfi(x) (x)
 #endif
 
 /*

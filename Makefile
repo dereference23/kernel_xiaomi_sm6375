@@ -971,16 +971,13 @@ endif
 
 ifdef CONFIG_CFI_CLANG
 CC_FLAGS_CFI	:= -fsanitize=cfi \
+		   -fsanitize-cfi-cross-dso \
 		   -fno-sanitize-cfi-canonical-jump-tables \
+		   -fno-sanitize-trap=cfi \
 		   -fno-sanitize-blacklist
 
-ifdef CONFIG_MODULES
-CC_FLAGS_CFI	+= -fsanitize-cfi-cross-dso
-endif
-
 ifdef CONFIG_CFI_PERMISSIVE
-CC_FLAGS_CFI	+= -fsanitize-recover=cfi \
-		   -fno-sanitize-trap=cfi
+CC_FLAGS_CFI	+= -fsanitize-recover=cfi
 endif
 
 # If LTO flags are filtered out, we must also filter out CFI.

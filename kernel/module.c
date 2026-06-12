@@ -3641,8 +3641,6 @@ int __weak module_finalize(const Elf_Ehdr *hdr,
 	return 0;
 }
 
-static void cfi_init(struct module *mod);
-
 static int post_relocation(struct module *mod, const struct load_info *info)
 {
 	/* Sort exception table now relocations are done. */
@@ -3654,9 +3652,6 @@ static int post_relocation(struct module *mod, const struct load_info *info)
 
 	/* Setup kallsyms-specific fields. */
 	add_kallsyms(mod, info);
-
-	/* Setup CFI for the module. */
-	cfi_init(mod);
 
 	/* Arch-specific module finalizing. */
 	return module_finalize(info->hdr, info->sechdrs, mod);
@@ -3947,6 +3942,8 @@ static int unknown_module_param_cb(char *param, char *val, const char *modname,
 	return 0;
 }
 
+static void cfi_init(struct module *mod);
+
 /* Allocate and load the module: note that size of section 0 is always
    zero, and we rely on this for optional sections. */
 static int load_module(struct load_info *info, const char __user *uargs,
@@ -4073,6 +4070,9 @@ static int load_module(struct load_info *info, const char __user *uargs,
 
 	flush_module_icache(mod);
 
+	/* Setup CFI for the module. */
+	cfi_init(mod);
+
 	/* Now copy in args */
 	mod->args = strndup_user(uargs, ~0UL >> 1);
 	if (IS_ERR(mod->args)) {
@@ -4141,13 +4141,12 @@ static int load_module(struct load_info *info, const char __user *uargs,
 	mutex_unlock(&module_mutex);
 
  ddebug_cleanup:
-	/* Clean up CFI for the module. */
-	cfi_cleanup(mod);
 	ftrace_release_mod(mod);
 	dynamic_debug_remove(mod, info->debug);
 	synchronize_rcu();
 	kfree(mod->args);
  free_arch_cleanup:
+	cfi_cleanup(mod);
 	module_arch_cleanup(mod);
  free_modinfo:
 	free_modinfo(mod);
@@ -4489,18 +4488,32 @@ int module_kallsyms_on_each_symbol(int (*fn)(void *, const char *,
 static void cfi_init(struct module *mod)
 {
 #ifdef CONFIG_CFI_CLANG
+	initcall_t *init;
+	exitcall_t *exit;
+
 	rcu_read_lock_sched();
-	mod->cfi_check = (cfi_check_fn)find_kallsyms_symbol_value(mod,
-						CFI_CHECK_FN_NAME);
+	mod->cfi_check = (cfi_check_fn)
+		find_kallsyms_symbol_value(mod, "__cfi_check");
+	init = (initcall_t *)
+		find_kallsyms_symbol_value(mod, "__cfi_jt_init_module");
+	exit = (exitcall_t *)
+		find_kallsyms_symbol_value(mod, "__cfi_jt_cleanup_module");
 	rcu_read_unlock_sched();
-	cfi_module_add(mod, module_addr_min, module_addr_max);
+
+	/* Fix init/exit functions to point to the CFI jump table */
+	if (init)
+		mod->init = *init;
+	if (exit)
+		mod->exit = *exit;
+
+	cfi_module_add(mod, module_addr_min);
 #endif
 }
 
 static void cfi_cleanup(struct module *mod)
 {
 #ifdef CONFIG_CFI_CLANG
-	cfi_module_remove(mod, module_addr_min, module_addr_max);
+	cfi_module_remove(mod, module_addr_min);
 #endif
 }
 
